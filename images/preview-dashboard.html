@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clack Reader — Dashboard Preview</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f172a;--card:#1e293b;--card-hover:#273548;
+  --text:#e2e8f0;--text-dim:#94a3b8;--accent:#38bdf8;
+  --green:#4ade80;--yellow:#facc15;--red:#f87171;--blue:#60a5fa;
+  --radius:12px;--shadow:0 4px 24px rgba(0,0,0,.3);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;padding:16px}
+.banner{text-align:center;padding:8px;background:#334155;border-radius:8px;
+  margin-bottom:16px;font-size:.8em;color:var(--yellow)}
+.header{text-align:center;padding:20px 0 10px;margin-bottom:20px}
+.header h1{font-size:1.6em;font-weight:700;color:var(--accent);letter-spacing:-.5px}
+.header .sub{font-size:.85em;color:var(--text-dim);margin-top:4px}
+.status-bar{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;
+  margin-bottom:24px;font-size:.8em;color:var(--text-dim)}
+.status-bar .dot{width:8px;height:8px;border-radius:50%;display:inline-block;
+  margin-right:4px;vertical-align:middle}
+.dot.online{background:var(--green);box-shadow:0 0 6px var(--green)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:16px;max-width:1200px;margin:0 auto}
+.card{background:var(--card);border-radius:var(--radius);padding:20px;
+  box-shadow:var(--shadow);transition:background .2s,transform .15s}
+.card:hover{background:var(--card-hover);transform:translateY(-2px)}
+.card .title{font-size:.75em;text-transform:uppercase;letter-spacing:1px;
+  color:var(--text-dim);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.card .title .icon{font-size:1.2em}
+.card .value{font-size:2em;font-weight:700;line-height:1.1}
+.card .unit{font-size:.45em;font-weight:400;color:var(--text-dim);margin-left:4px}
+.card.salt{border-left:3px solid var(--accent)}
+.card.water{border-left:3px solid var(--blue)}
+.card.power{border-left:3px solid var(--yellow)}
+.card.system{border-left:3px solid var(--green)}
+.card.alert{border-left:3px solid var(--red)}
+.salt-bar{height:8px;border-radius:4px;background:#334155;margin-top:12px;overflow:hidden}
+.salt-bar .fill{height:100%;border-radius:4px}
+.links{text-align:center;margin-top:24px;padding:12px 0;font-size:.8em}
+.links a{color:var(--accent);text-decoration:none;margin:0 12px}
+.links a:hover{text-decoration:underline}
+@media(max-width:600px){
+  .card .value{font-size:1.5em}
+  .grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="banner">&#x1F4F7; STATIC PREVIEW — This is a dummy mockup of the /dashboard page with sample data</div>
+
+<div class="header">
+  <h1>&#x1F4A7; Clack Reader</h1>
+  <div class="sub">Water Softener Dashboard</div>
+</div>
+<div class="status-bar">
+  <span><span class="dot online"></span> Online</span>
+  <span>2026-04-27 14:30:00</span>
+  <span>Uptime: 1d 0h 0m</span>
+</div>
+
+<div class="grid">
+  <!-- Salt cards -->
+  <div class="card salt">
+    <div class="title"><span class="icon">🧂</span> Salt Level</div>
+    <div class="value">72<span class="unit">%</span></div>
+    <div class="salt-bar"><div class="fill" style="width:72%;background:var(--green)"></div></div>
+  </div>
+
+  <div class="card salt">
+    <div class="title"><span class="icon">📏</span> Salt Height</div>
+    <div class="value">22.5<span class="unit">cm</span></div>
+  </div>
+
+  <div class="card salt">
+    <div class="title"><span class="icon">📡</span> Sensor Distance</div>
+    <div class="value">15.3<span class="unit">cm</span></div>
+  </div>
+
+  <div class="card alert">
+    <div class="title"><span class="icon">⚠</span> Fill Salt?</div>
+    <div class="value">no</div>
+  </div>
+
+  <!-- Water cards -->
+  <div class="card water">
+    <div class="title"><span class="icon">🚰</span> Water Meter</div>
+    <div class="value">1250.5<span class="unit">L</span></div>
+  </div>
+
+  <div class="card water">
+    <div class="title"><span class="icon">💧</span> Capacity Left</div>
+    <div class="value">1.95<span class="unit">m³</span></div>
+  </div>
+
+  <div class="card water">
+    <div class="title"><span class="icon">💧</span> Liters Left</div>
+    <div class="value">1950<span class="unit">L</span></div>
+  </div>
+
+  <div class="card water">
+    <div class="title"><span class="icon">🔄</span> Last Regeneration</div>
+    <div class="value" style="font-size:1.2em">Mon 14 Apr 10:30</div>
+  </div>
+
+  <div class="card water">
+    <div class="title"><span class="icon">🔄</span> Cycle Step</div>
+    <div class="value">Idle</div>
+  </div>
+
+  <div class="card water">
+    <div class="title"><span class="icon">⏰</span> Time to Regen</div>
+    <div class="value" style="font-size:1.4em">12d 6h</div>
+  </div>
+
+  <!-- Water hardness -->
+  <div class="card water">
+    <div class="title"><span class="icon">💧</span> Water Hardness °D</div>
+    <div class="value">16.0<span class="unit">°D</span></div>
+  </div>
+
+  <div class="card water">
+    <div class="title"><span class="icon">💧</span> Water Hardness °F</div>
+    <div class="value">28.6<span class="unit">°F</span></div>
+  </div>
+
+  <div class="card water">
+    <div class="title"><span class="icon">🏷</span> Hardness Class</div>
+    <div class="value" style="font-size:1.3em">Medium hard</div>
+  </div>
+
+  <!-- Power cards -->
+  <div class="card power">
+    <div class="title"><span class="icon">⚡</span> Power Clack</div>
+    <div class="value">1.44<span class="unit">W</span></div>
+  </div>
+
+  <div class="card power">
+    <div class="title"><span class="icon">🔋</span> Voltage</div>
+    <div class="value">12.0<span class="unit">V</span></div>
+  </div>
+
+  <div class="card power">
+    <div class="title"><span class="icon">⚡</span> Power ESP</div>
+    <div class="value">0.85<span class="unit">W</span></div>
+  </div>
+
+  <div class="card power">
+    <div class="title"><span class="icon">🔌</span> Chlorinator</div>
+    <div class="value" style="color:var(--text-dim)">OFF</div>
+  </div>
+
+  <!-- System cards -->
+  <div class="card system">
+    <div class="title"><span class="icon">📶</span> WiFi Signal</div>
+    <div class="value">78<span class="unit">%</span></div>
+  </div>
+
+  <div class="card system">
+    <div class="title"><span class="icon">ℹ</span> ESPHome Version</div>
+    <div class="value" style="font-size:1.3em">2026.4.2</div>
+  </div>
+
+  <div class="card system">
+    <div class="title"><span class="icon">⏱</span> Uptime</div>
+    <div class="value">1.0<span class="unit">days</span></div>
+  </div>
+
+  <div class="card system">
+    <div class="title"><span class="icon">⚙</span> Function Mode</div>
+    <div class="value">Off</div>
+  </div>
+</div>
+
+<div class="links">
+  <a href="preview-config.html">Configuration</a>
+  <a href="preview-json.html">Raw JSON</a>
+</div>
+</body>
+</html>

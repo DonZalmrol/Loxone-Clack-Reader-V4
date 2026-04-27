@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clack V3 — /json Endpoint Preview</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f172a;--card:#1e293b;
+  --text:#e2e8f0;--text-dim:#94a3b8;--accent:#38bdf8;
+  --green:#4ade80;--yellow:#facc15;--red:#f87171;--blue:#60a5fa;
+  --str:#a5d6a7;--num:#90caf9;--bool:#ce93d8;--null:#ef9a9a;--key:#e2e8f0;
+  --radius:12px;--shadow:0 4px 24px rgba(0,0,0,.3);
+}
+body{font-family:'Cascadia Code','Fira Code','SF Mono',Consolas,monospace;
+  background:var(--bg);color:var(--text);min-height:100vh;padding:16px}
+.banner{text-align:center;padding:8px;background:#334155;border-radius:8px;
+  margin-bottom:16px;font-size:.8em;color:var(--yellow);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.header{text-align:center;padding:20px 0 10px;margin-bottom:20px;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.header h1{font-size:1.6em;font-weight:700;color:var(--accent);letter-spacing:-.5px}
+.header .sub{font-size:.85em;color:var(--text-dim);margin-top:4px}
+.header .badge{display:inline-block;background:var(--accent);color:#0f172a;
+  padding:2px 10px;border-radius:12px;font-size:.7em;font-weight:700;margin-top:6px}
+.json-container{max-width:900px;margin:0 auto;background:var(--card);
+  border-radius:var(--radius);padding:24px 28px;box-shadow:var(--shadow);
+  font-size:.85em;line-height:1.7;overflow-x:auto;white-space:pre}
+.k{color:var(--key)}
+.s{color:var(--str)}
+.n{color:var(--num)}
+.b{color:var(--bool)}
+.nl{color:var(--null)}
+.cmt{color:#546e7a;font-style:italic}
+.links{text-align:center;margin-top:24px;padding:12px 0;font-size:.8em;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.links a{color:var(--accent);text-decoration:none;margin:0 12px}
+.links a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="banner">&#x1F4F7; STATIC PREVIEW — This is a dummy mockup of the /json endpoint response with sample data</div>
+
+<div class="header">
+  <h1>GET /json</h1>
+  <div class="sub">Content-Type: application/json</div>
+  <div class="badge">200 OK</div>
+</div>
+
+<div class="json-container">{
+  <span class="cmt">// System (added by json_endpoint.h)</span>
+  <span class="k">"timestamp"</span>: <span class="s">"2026-04-27T14:30:00"</span>,
+  <span class="k">"uptime_seconds"</span>: <span class="n">86400</span>,
+
+  <span class="cmt">// Sensors — Salt</span>
+  <span class="k">"salt_level_distance_tof"</span>: <span class="n">15.3</span>,
+  <span class="k">"salt_level_distance_tof_unit"</span>: <span class="s">"cm"</span>,
+  <span class="k">"salt_level_distance"</span>: <span class="n">15.3</span>,
+  <span class="k">"salt_level_distance_unit"</span>: <span class="s">"cm"</span>,
+  <span class="k">"salt_level_percent"</span>: <span class="n">72</span>,
+  <span class="k">"salt_level_percent_unit"</span>: <span class="s">"%"</span>,
+  <span class="k">"salt_level_for_dashboard"</span>: <span class="n">80</span>,
+  <span class="k">"salt_level_for_dashboard_unit"</span>: <span class="s">"%"</span>,
+  <span class="k">"salt_level_height"</span>: <span class="n">22.5</span>,
+  <span class="k">"salt_level_height_unit"</span>: <span class="s">"cm"</span>,
+
+  <span class="cmt">// Sensors — Water</span>
+  <span class="k">"water_flow_rate"</span>: <span class="n">0</span>,
+  <span class="k">"water_flow_rate_unit"</span>: <span class="s">"L/min"</span>,
+  <span class="k">"water_meter"</span>: <span class="n">1250.5</span>,
+  <span class="k">"water_meter_unit"</span>: <span class="s">"L"</span>,
+  <span class="k">"water_softener_m3_left"</span>: <span class="n">1.95</span>,
+  <span class="k">"water_softener_m3_left_unit"</span>: <span class="s">"m³"</span>,
+  <span class="k">"water_softener_ltr_left"</span>: <span class="n">1950</span>,
+  <span class="k">"water_softener_ltr_left_unit"</span>: <span class="s">"L"</span>,
+  <span class="k">"water_softener_percent_ltr_left"</span>: <span class="n">52.7</span>,
+  <span class="k">"water_softener_percent_ltr_left_unit"</span>: <span class="s">"%"</span>,
+  <span class="k">"water_softener_percent_time_left"</span>: <span class="n">57.1</span>,
+  <span class="k">"water_softener_percent_time_left_unit"</span>: <span class="s">"%"</span>,
+  <span class="k">"capacity_used"</span>: <span class="n">1150</span>,
+  <span class="k">"capacity_used_unit"</span>: <span class="s">"L"</span>,
+
+  <span class="cmt">// Sensors — Water Hardness</span>
+  <span class="k">"water_hardness_f"</span>: <span class="n">28.6</span>,
+  <span class="k">"water_hardness_f_unit"</span>: <span class="s">"°F"</span>,
+
+  <span class="cmt">// Sensors — Power (INA3221)</span>
+  <span class="k">"power_clack"</span>: <span class="n">1.44</span>,
+  <span class="k">"power_clack_unit"</span>: <span class="s">"W"</span>,
+  <span class="k">"power_esp"</span>: <span class="n">0.85</span>,
+  <span class="k">"power_esp_unit"</span>: <span class="s">"W"</span>,
+  <span class="k">"power_chlorinator"</span>: <span class="n">0</span>,
+  <span class="k">"power_chlorinator_unit"</span>: <span class="s">"W"</span>,
+  <span class="k">"voltage"</span>: <span class="n">12</span>,
+  <span class="k">"voltage_unit"</span>: <span class="s">"V"</span>,
+  <span class="k">"internal_temperature"</span>: <span class="n">42.5</span>,
+  <span class="k">"internal_temperature_unit"</span>: <span class="s">"°C"</span>,
+
+  <span class="cmt">// Sensors — Diagnostics</span>
+  <span class="k">"wifi_signal_db"</span>: <span class="n">-62</span>,
+  <span class="k">"wifi_signal_db_unit"</span>: <span class="s">"dBm"</span>,
+  <span class="k">"wifi_signal"</span>: <span class="n">78</span>,
+  <span class="k">"wifi_signal_unit"</span>: <span class="s">"%"</span>,
+  <span class="k">"uptime"</span>: <span class="n">1</span>,
+  <span class="k">"uptime_unit"</span>: <span class="s">"d"</span>,
+
+  <span class="cmt">// Text Sensors</span>
+  <span class="k">"version"</span>: <span class="s">"2026.4.2"</span>,
+  <span class="k">"water_softener_ip"</span>: <span class="s">"192.168.1.50"</span>,
+  <span class="k">"fill_salt"</span>: <span class="s">"no"</span>,
+  <span class="k">"cycle_step"</span>: <span class="s">"Idle"</span>,
+  <span class="k">"time_to_regen"</span>: <span class="s">"12d 6h"</span>,
+  <span class="k">"time_to_resinclean"</span>: <span class="s">"98d 4h"</span>,
+  <span class="k">"regenerated_on"</span>: <span class="s">"Mon 14 Apr 10:30"</span>,
+  <span class="k">"resinclean_on"</span>: <span class="s">"Sat 01 Mar 08:00"</span>,
+  <span class="k">"salt_fill_on"</span>: <span class="s">"Thu 10 Apr 09:15"</span>,
+  <span class="k">"water_hardness_class"</span>: <span class="s">"Medium hard"</span>,
+  <span class="k">"cycle_runtime"</span>: <span class="s">"0h 0m 0s"</span>,
+  <span class="k">"cycle_total_runtime"</span>: <span class="s">"0h 0m 0s"</span>,
+  <span class="k">"operation_time"</span>: <span class="s">"1d 2h"</span>,
+  <span class="k">"brine"</span>: <span class="s">"0h 45m 10s"</span>,
+  <span class="k">"backwash"</span>: <span class="s">"0h 10m 0s"</span>,
+  <span class="k">"backwash2"</span>: <span class="s">"0h 0m 0s"</span>,
+  <span class="k">"rinse"</span>: <span class="s">"0h 5m 0s"</span>,
+  <span class="k">"fill"</span>: <span class="s">"0h 8m 30s"</span>,
+  <span class="k">"service"</span>: <span class="s">"0h 0m 0s"</span>,
+  <span class="k">"run_time"</span>: <span class="s">"1h 8m 40s"</span>,
+
+  <span class="cmt">// Binary Sensors</span>
+  <span class="k">"connection_status"</span>: <span class="b">true</span>,
+  <span class="k">"motor_running"</span>: <span class="b">false</span>,
+  <span class="k">"water_flowing"</span>: <span class="b">false</span>,
+  <span class="k">"leakage_detected"</span>: <span class="b">false</span>,
+  <span class="k">"block_regen"</span>: <span class="b">false</span>,
+
+  <span class="cmt">// Switches</span>
+  <span class="k">"chlorinator"</span>: <span class="b">false</span>,
+
+  <span class="cmt">// Numbers (configurable sliders)</span>
+  <span class="k">"set_pulse_per_ltr"</span>: <span class="n">28.6</span>,
+  <span class="k">"min_salt_distance"</span>: <span class="n">0</span>,
+  <span class="k">"min_salt_distance_unit"</span>: <span class="s">"cm"</span>,
+  <span class="k">"max_salt_distance"</span>: <span class="n">30</span>,
+  <span class="k">"max_salt_distance_unit"</span>: <span class="s">"cm"</span>,
+  <span class="k">"fill_salt_distance"</span>: <span class="n">1.5</span>,
+  <span class="k">"fill_salt_distance_unit"</span>: <span class="s">"cm"</span>,
+  <span class="k">"capacity_in_liters"</span>: <span class="n">3700</span>,
+  <span class="k">"capacity_in_liters_unit"</span>: <span class="s">"L"</span>,
+  <span class="k">"capacity_in_days"</span>: <span class="n">14</span>,
+  <span class="k">"capacity_in_days_unit"</span>: <span class="s">"days"</span>,
+  <span class="k">"resinclean_days"</span>: <span class="n">120</span>,
+  <span class="k">"resinclean_days_unit"</span>: <span class="s">"days"</span>,
+  <span class="k">"chlorinator_active_time"</span>: <span class="n">10</span>,
+  <span class="k">"chlorinator_active_time_unit"</span>: <span class="s">"min"</span>,
+  <span class="k">"delay_leakage_alarm"</span>: <span class="n">30</span>,
+  <span class="k">"delay_leakage_alarm_unit"</span>: <span class="s">"min"</span>,
+  <span class="k">"water_flow_timeout"</span>: <span class="n">6.5</span>,
+  <span class="k">"water_flow_timeout_unit"</span>: <span class="s">"s"</span>,
+  <span class="k">"water_hardness_d"</span>: <span class="n">16</span>,
+  <span class="k">"water_hardness_d_unit"</span>: <span class="s">"°D"</span>,
+
+  <span class="cmt">// Selects</span>
+  <span class="k">"function_mode"</span>: <span class="s">"Off"</span>,
+  <span class="k">"regeneration_mode"</span>: <span class="s">"Downflow - Post fill"</span>
+}</div>
+
+<div class="links">
+  <a href="preview-dashboard.html">Dashboard</a>
+  <a href="preview-config.html">Configuration</a>
+</div>
+</body>
+</html>
