@@ -1,3 +1,4 @@
+[README.md](https://github.com/user-attachments/files/27125295/README.md)
 # 💧 Clack Reader V4 — Loxone Edition
 
 ESPHome firmware for the **Clack DV (WSPI) water softener** with TOF salt level sensor, water meter pulse counting, chlorinator relay control, and 3-channel power monitoring. This fork adds a **JSON API**, **HTML5 dashboard**, and **web configuration page** for integration with **Loxone Miniserver** (or any HTTP-polling system), replacing the need for Home Assistant.
@@ -196,27 +197,45 @@ python -m esphome upload esphome/clack.yaml --device <IP_or_COM_port>
 
 ### Example `/json` Response
 
+> The `/json` endpoint outputs **all** non-internal entities (sensors, text sensors, binary sensors, switches, numbers, selects). Sensors and numbers with a `unit_of_measurement` also get a `_unit` suffix key. The example below shows all fields produced by a typical running system.
+
 ```json
 {
   "timestamp": "2026-04-27T14:30:00",
   "uptime_seconds": 86400,
+
   "salt_level_distance_tof": 15.3,
   "salt_level_distance_tof_unit": "cm",
+  "salt_level_distance": 15.3,
+  "salt_level_distance_unit": "cm",
   "salt_level_percent": 72,
   "salt_level_percent_unit": "%",
+  "salt_level_for_dashboard": 80,
+  "salt_level_for_dashboard_unit": "%",
   "salt_level_height": 22.5,
   "salt_level_height_unit": "cm",
+
+  "water_flow_rate": 0.0,
+  "water_flow_rate_unit": "L/min",
   "water_meter": 1250.5,
   "water_meter_unit": "L",
   "water_softener_m3_left": 1.95,
   "water_softener_m3_left_unit": "m³",
   "water_softener_ltr_left": 1950,
   "water_softener_ltr_left_unit": "L",
+  "water_softener_percent_ltr_left": 52.7,
+  "water_softener_percent_ltr_left_unit": "%",
+  "water_softener_percent_time_left": 57.1,
+  "water_softener_percent_time_left_unit": "%",
+  "capacity_used": 1150.0,
+  "capacity_used_unit": "L",
+
   "water_hardness_d": 16,
   "water_hardness_d_unit": "°D",
   "water_hardness_f": 28.6,
   "water_hardness_f_unit": "°F",
   "water_hardness_class": "Medium hard",
+
   "power_clack": 1.44,
   "power_clack_unit": "W",
   "power_esp": 0.85,
@@ -225,48 +244,182 @@ python -m esphome upload esphome/clack.yaml --device <IP_or_COM_port>
   "power_chlorinator_unit": "W",
   "voltage": 12.0,
   "voltage_unit": "V",
+  "internal_temperature": 42.5,
+  "internal_temperature_unit": "°C",
+
+  "wifi_signal_db": -62,
+  "wifi_signal_db_unit": "dBm",
   "wifi_signal": 78,
   "wifi_signal_unit": "%",
   "version": "2026.4.2",
   "uptime": 1.0,
-  "uptime_unit": "days",
+  "uptime_unit": "d",
+  "water_softener_ip": "192.168.1.50",
+
   "regenerated_on": "Mon 14 Apr 10:30",
+  "resinclean_on": "Sat 01 Mar 08:00",
+  "salt_fill_on": "Thu 10 Apr 09:15",
   "cycle_step": "Idle",
-  "time_to_regen": "12 days",
+  "time_to_regen": "12d 6h",
+  "time_to_resinclean": "98d 4h",
+  "cycle_runtime": "0h 0m 0s",
+  "cycle_total_runtime": "0h 0m 0s",
+  "operation_time": "1d 2h",
+  "brine": "0h 45m 10s",
+  "backwash": "0h 10m 0s",
+  "backwash2": "0h 0m 0s",
+  "rinse": "0h 5m 0s",
+  "fill": "0h 8m 30s",
+  "service": "0h 0m 0s",
+  "run_time": "1h 8m 40s",
   "fill_salt": "no",
-  "chlorinator": false,
-  "function_mode": "Off",
+
+  "connection_status": true,
+  "motor_running": false,
   "water_flowing": false,
-  "leakage_detected": false
+  "leakage_detected": false,
+  "block_regen": false,
+
+  "chlorinator": false,
+
+  "set_pulse_per_ltr": 28.60,
+  "min_salt_distance": 0,
+  "min_salt_distance_unit": "cm",
+  "max_salt_distance": 30,
+  "max_salt_distance_unit": "cm",
+  "fill_salt_distance": 1.5,
+  "fill_salt_distance_unit": "cm",
+  "capacity_in_liters": 3700,
+  "capacity_in_liters_unit": "L",
+  "capacity_in_days": 14,
+  "capacity_in_days_unit": "days",
+  "resinclean_days": 120,
+  "resinclean_days_unit": "days",
+  "chlorinator_active_time": 10,
+  "chlorinator_active_time_unit": "min",
+  "delay_leakage_alarm": 30,
+  "delay_leakage_alarm_unit": "min",
+  "water_flow_timeout": 6.5,
+  "water_flow_timeout_unit": "s",
+
+  "function_mode": "Off",
+  "regeneration_mode": "Downflow - Post fill"
 }
 ```
 
 ### Key JSON Fields
 
+#### System (added by json_endpoint.h)
+
 | Key | Type | Unit | Description |
 |-----|------|------|-------------|
 | `timestamp` | string | ISO 8601 | Current time from NTP |
-| `uptime_seconds` | number | s | Seconds since boot |
-| `salt_level_distance_tof` | number | cm | Raw TOF sensor distance |
+| `uptime_seconds` | number | s | Seconds since boot (millis-based) |
+
+#### Salt Level Sensors
+
+| Key | Type | Unit | Description |
+|-----|------|------|-------------|
+| `salt_level_distance_tof` | number | cm | VL53L1X raw TOF sensor distance |
+| `salt_level_distance` | number | cm | Last stored TOF distance value |
 | `salt_level_percent` | number | % | Salt level percentage (0–100) |
+| `salt_level_for_dashboard` | number | % | Stepped salt level for dashboard animation (0/10/20/40/60/80/100) |
 | `salt_level_height` | number | cm | Calculated salt height from bottom |
+
+#### Water Sensors
+
+| Key | Type | Unit | Description |
+|-----|------|------|-------------|
+| `water_flow_rate` | number | L/min | Current water flow rate from pulse meter |
 | `water_meter` | number | L | Total water used since last regeneration |
 | `water_softener_m3_left` | number | m³ | Capacity remaining in cubic meters |
 | `water_softener_ltr_left` | number | L | Capacity remaining in liters |
-| `water_hardness_d` | number | °D | Water hardness (German degrees) |
-| `water_hardness_f` | number | °F | Water hardness (French degrees) |
-| `water_hardness_class` | string | — | Very soft / Soft / Medium hard / Hard / Very hard |
+| `water_softener_percent_ltr_left` | number | % | Capacity remaining as percentage of liters |
+| `water_softener_percent_time_left` | number | % | Capacity remaining as percentage of time |
+| `capacity_used` | number | L | Total liters used during last regeneration cycle |
+| `water_hardness_f` | number | °F | Water hardness (French degrees, auto-calculated) |
+
+#### Power Sensors
+
+| Key | Type | Unit | Description |
+|-----|------|------|-------------|
 | `power_clack` | number | W | Clack PCB power (INA3221 ch1) |
 | `power_esp` | number | W | ESP/Atom S3 power (INA3221 ch2) |
 | `power_chlorinator` | number | W | Chlorinator power (INA3221 ch3) |
 | `voltage` | number | V | Bus voltage (INA3221 ch1) |
-| `regenerated_on` | string | — | Date/time of last regeneration |
-| `cycle_step` | string | — | Current regeneration phase (Idle/Backwash/Brine/...) |
-| `time_to_regen` | string | — | Days remaining until next regeneration |
-| `fill_salt` | string | — | "yes" or "no" — salt refill needed? |
-| `chlorinator` | boolean | — | Chlorinator relay on/off state |
-| `function_mode` | string | — | Off / Chlorinator / DP Switch |
-| `leakage_detected` | boolean | — | Continuous water flow alarm |
+| `internal_temperature` | number | °C | ESP32-S3 internal die temperature |
+
+#### Diagnostics & System Sensors
+
+| Key | Type | Unit | Description |
+|-----|------|------|-------------|
+| `wifi_signal_db` | number | dBm | WiFi signal strength in dBm |
+| `wifi_signal` | number | % | WiFi signal strength in percent |
+| `uptime` | number | d | Device uptime in days |
+
+#### Text Sensors
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `version` | string | ESPHome firmware version |
+| `water_softener_ip` | string | Device IP address |
+| `fill_salt` | string | "yes" or "no" — salt refill needed? |
+| `cycle_step` | string | Current regeneration phase (Idle/Backwash/Brine/Backwash2/Rinse/Fill/Service) |
+| `time_to_regen` | string | Time remaining until next regeneration (e.g. "12d 6h") |
+| `time_to_resinclean` | string | Time remaining until next resin clean (e.g. "98d 4h") |
+| `regenerated_on` | string | Date/time of last regeneration (e.g. "Mon 14 Apr 10:30") |
+| `resinclean_on` | string | Date/time of last resin clean |
+| `salt_fill_on` | string | Date/time of last salt fill |
+| `water_hardness_class` | string | Very soft / Soft / Medium hard / Hard / Very hard |
+| `operation_time` | string | Total operation time of last regeneration cycle |
+| `cycle_runtime` | string | Current cycle step elapsed time (h/m/s) |
+| `cycle_total_runtime` | string | Total regeneration elapsed time (h/m/s) |
+| `brine` | string | Last brine step duration |
+| `backwash` | string | Last backwash step duration |
+| `backwash2` | string | Last backwash2 step duration |
+| `rinse` | string | Last rinse step duration |
+| `fill` | string | Last fill step duration |
+| `service` | string | Last service step duration |
+| `run_time` | string | Last total regeneration run time |
+
+#### Binary Sensors
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `connection_status` | boolean | ESP online/offline status |
+| `motor_running` | boolean | Clack motor currently running |
+| `water_flowing` | boolean | Water flow detected (pulse meter active) |
+| `leakage_detected` | boolean | Continuous water flow alarm triggered |
+| `block_regen` | boolean | Regeneration cycle currently blocked |
+
+#### Switches
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `chlorinator` | boolean | Chlorinator relay on/off state |
+
+#### Configurable Numbers (sliders/inputs)
+
+| Key | Type | Unit | Description |
+|-----|------|------|-------------|
+| `water_hardness_d` | number | °D | Water hardness setting (German degrees) |
+| `set_pulse_per_ltr` | number | — | Pulses per liter (28.60 for Clack DV, 16.30 for WS1) |
+| `min_salt_distance` | number | cm | Sensor distance when salt tank is full |
+| `max_salt_distance` | number | cm | Sensor distance when salt tank is empty |
+| `fill_salt_distance` | number | cm | Salt height below which "fill salt = yes" |
+| `capacity_in_liters` | number | L | Water softener capacity per regeneration cycle |
+| `capacity_in_days` | number | days | Expected days between regenerations |
+| `resinclean_days` | number | days | Interval between resin cleaning |
+| `chlorinator_active_time` | number | min | Chlorinator auto-off timer |
+| `delay_leakage_alarm` | number | min | Continuous flow time before leakage alarm |
+| `water_flow_timeout` | number | s | Flow sensor pulse timeout |
+
+#### Selects
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `function_mode` | string | Off / Chlorinator |
+| `regeneration_mode` | string | Upflow - Post fill / Upflow - Pre fill / Downflow - Post fill / Downflow - Pre fill |
 
 ---
 
@@ -304,12 +457,24 @@ sequenceDiagram
 | Salt Level | `\v"salt_level_percent":\v` | `72` |
 | Salt Height | `\v"salt_level_height":\v` | `22.5` |
 | Water Meter | `\v"water_meter":\v` | `1250.5` |
+| Flow Rate | `\v"water_flow_rate":\v` | `0.0` |
 | Liters Left | `\v"water_softener_ltr_left":\v` | `1950` |
+| m³ Left | `\v"water_softener_m3_left":\v` | `1.95` |
+| % Liters Left | `\v"water_softener_percent_ltr_left":\v` | `52.7` |
+| % Time Left | `\v"water_softener_percent_time_left":\v` | `57.1` |
 | Fill Salt | `\v"fill_salt":"\v` | `no` |
+| Cycle Step | `\v"cycle_step":"\v` | `Idle` |
+| Time to Regen | `\v"time_to_regen":"\v` | `12d 6h` |
+| Time to Resinclean | `\v"time_to_resinclean":"\v` | `98d 4h` |
 | Power Clack | `\v"power_clack":\v` | `1.44` |
+| Power ESP | `\v"power_esp":\v` | `0.85` |
 | Power Chlorinator | `\v"power_chlorinator":\v` | `0.0` |
+| Voltage | `\v"voltage":\v` | `12.0` |
 | WiFi Signal | `\v"wifi_signal":\v` | `78` |
+| Motor Running | `\v"motor_running":\v` | `false` |
+| Water Flowing | `\v"water_flowing":\v` | `false` |
 | Leakage | `\v"leakage_detected":\v` | `false` |
+| Chlorinator | `\v"chlorinator":\v` | `false` |
 
 > **Tip:** For Loxone parsing, use `\v` as value delimiter. The pattern `\v"key":\v` extracts the value after the colon.
 
