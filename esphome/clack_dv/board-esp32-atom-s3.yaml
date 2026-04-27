@@ -1,0 +1,235 @@
+### ESP32 S3 used is a M5stack Atom S3 lite
+
+esp32:
+  ## Atom S3 lite
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 8MB
+  cpu_frequency: 240MHz
+  framework:
+    type: esp-idf
+    version: recommended
+    # Custom sdkconfig options
+    sdkconfig_options:
+      COMPILER_OPTIMIZATION_SIZE: y
+      CONFIG_BT_ENABLED: n
+
+i2c:
+  ## use I2C bus external, not on ESP GPIO1 and GPIO2
+  - id: bus_a
+    sda: GPIO6
+    scl: GPIO5
+    scan: false
+#    frequency: 50kHz  # a different frequency can cause TOF sensor not to react anymore
+#    timeout: 100us
+
+binary_sensor:
+  ## temporary test button for testing water meter pulse
+  # Binary sensor "clack_use_test_button"
+  - id: clack_use_test_button
+    name: clack_use_test_button
+    platform: template
+    internal: true
+    filters:
+      - delayed_on_off: 50ms
+    on_press:
+      then:
+        - lambda: |-
+            ESP_LOGI("main", "Water meter freeze? %s", id(water_meter_freeze) ? "Yes" : "No");
+        - if:
+            condition:
+              lambda: 'return id(water_meter_freeze) == false;'
+            then:
+              - pulse_meter.set_total_pulses:
+                  id: clack_flow_rate
+                  value: !lambda |-
+                    return (id(totalWaterUsage) + 0.1) * id(pulse_per_liter);
+
+  # Binary sensor "init_state"
+  - platform: template
+    name: Block regen
+    id: init_state
+    internal: false
+    lambda: |-
+      if (id(wait_on_delay)) {
+        return true;
+      } else {
+        return false;
+      }
+
+    ## Push button on top of Atom S3 lite for status led
+    ## Long push = led brightness changes
+    ## Short push = led On or Off
+  - platform: gpio
+    pin:
+      number: GPIO41
+      inverted: true
+      mode: INPUT_PULLUP
+    name: "Brightness Button"
+    id: brightness_button
+    internal: true
+    icon: mdi:brightness-6
+    on_multi_click:
+      - timing:
+          - ON for at least 1s
+        then:
+          - logger.log: "Long press detected - adjust brightness"
+          - script.execute: adjust_brightness_loop
+
+      - timing:
+          - ON for at most 700ms
+          - OFF for at least 50ms
+        then:
+          - logger.log: "Short press detected - toggle LED on/off"
+          - light.toggle: status_led
+
+    on_release:
+      then:
+        - script.stop: adjust_brightness_loop
+
+# ## temporary test button for testing regeneration pulse
+switch:
+  # Chlorinator Relay
+  # Switch "chlorinator_relay"
+  - platform: gpio
+    pin:
+      number: GPIO8
+      inverted: false
+    name: ${clack_chlorinator}
+    id: chlorinator_relay
+    icon: mdi:bacteria
+    entity_category: config
+
+button:
+  # Button "clack_use_tst_but"
+  - platform: template
+    name: ${clack_use_tst_but}
+    id: clack_use_tst_but
+    on_press:
+      then:
+        - binary_sensor.template.publish:
+            id: clack_use_test_button
+            state: true
+        - delay: 100ms
+        - binary_sensor.template.publish:
+            id: clack_use_test_button
+            state: false
+
+  # Button "clack_resinclean_reset_button"
+  - platform: template
+    name: ${clack_resinclean_reset_button}
+    id: clack_resinclean_reset_button
+    on_press:
+      - lambda: |-
+          id(resinclean_last) = id(sntp_time).now().timestamp;
+      - component.update: clack_resinclean_last
+
+  # Button "clack_reset_but_last_dist"
+  - platform: template
+    name: ${clack_reset_but_last_dist}
+    id: clack_reset_but_last_dist
+    on_press:
+      then:
+        - component.update: clack_distance_tof
+        - lambda: |-
+            id(saltfill_last) = id(sntp_time).now().timestamp;
+        - component.update: clack_saltfill_last
+
+  # Button "clack_regen_stop_script"
+  - platform: template
+    name: ${clack_regen_stop_script}
+    id: clack_regen_stop_script
+    on_press:
+      then:
+        - script.stop: cycle_steps_post_upflow
+        - script.stop: cycle_steps_pre_upflow
+        - script.stop: cycle_steps_post_downflow
+        - script.stop: cycle_steps_pre_downflow
+        - script.execute: reset_cycle_steps
+        - script.wait: reset_cycle_steps
+
+##############################################
+## STATUS LED
+##############################################
+## Simple status led for Atom s3 (lite)
+## G35=RGB WS2812C-2020
+light:
+  - platform: esp32_rmt_led_strip
+    id: status_led
+    name: Status led
+    icon: mdi:lightbulb
+    internal: true # Hides from Home Assistant
+    rgb_order: GRB
+    pin: 35
+    num_leds: 4
+    chipset: ws2812
+    restore_mode: ALWAYS_OFF
+    entity_category: diagnostic
+    effects:
+      - pulse:
+          name: slow_pulse
+          transition_length: 250ms
+          update_interval: 500ms
+          min_brightness: 10%
+          max_brightness: 50%
+      - pulse:
+          name: fast_pulse
+          transition_length: 100ms
+          update_interval: 100ms
+          min_brightness: 25%
+          max_brightness: 100%
+
+## knop op de atom ingedrukt houden = veranderen brightness
+script:
+  - id: adjust_brightness_loop
+    mode: restart
+    then:
+      - repeat:
+          count: 1000
+          then:
+            - lambda: |-
+                static float brightness = 0.0;
+                brightness += 0.1;
+                if (brightness > 1.0) brightness = 0.0;
+                auto call = id(status_led).make_call();
+                call.set_brightness(brightness);
+                call.perform();
+            - delay: 750ms
+
+# Status LED color indicator interval
+# Green on => wifi connected - api connected
+# Green blinking => wifi connected - api disconnected
+# Purple => wifi disconnected
+# Blue => AP mode
+interval:
+  - interval: 10s
+    then:
+      if:
+        condition:
+          wifi.connected:
+        then:
+          - light.turn_on:
+              id: status_led
+              brightness: 40%
+              red: 0
+              green: 100%
+              blue: 0
+              effect: None
+        else:
+          if:
+            condition:
+              - lambda: 'return id(id_captive_portal).is_active();'
+            then:
+              - light.turn_on:
+                  id: status_led
+                  brightness: 40%
+                  red: 0
+                  green: 0
+                  blue: 100%
+            else:
+              - light.turn_on:
+                  id: status_led
+                  brightness: 40%
+                  red: 100%
+                  green: 0
+                  blue: 0

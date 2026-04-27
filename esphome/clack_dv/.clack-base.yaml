@@ -1,0 +1,1711 @@
+# Basics
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  includes:
+    - dashboard.h
+    - config_page.h
+    - json_endpoint.h
+  on_boot:
+    - priority: -100
+      then:
+        - script.execute: on_boot
+    - priority: -200.0
+      then:
+        - lambda: 'register_json_endpoint();'
+
+# OTA:
+ota:
+  platform: esphome
+
+# Home Assistant API - commented out for Loxone-only use.
+# Uncomment if you also use Home Assistant.
+#api:
+#  reboot_timeout: 0s
+#  actions:
+#    - action: water_meter_value
+#      variables:
+#        meter_value: float
+#      then:
+#        - pulse_meter.set_total_pulses:
+#            id: clack_flow_rate
+#            value: !lambda |-
+#              id(water_meter_force_overwrite) = true;
+#              return float(meter_value) * id(pulse_per_liter);
+#    - action: water_m3_left
+#      variables:
+#        m3_left: float
+#      then:
+#        - pulse_meter.set_total_pulses:
+#            id: clack_flow_rate
+#            value: !lambda |-
+#              id(water_meter_force_overwrite) = true;
+#              float liters_left = float(m3_left) * 1000;
+#              float meter_value = id(clack_capacity_liters).state - liters_left;
+#              return float(meter_value) * id(pulse_per_liter);
+#    - action: last_distance_value
+#      variables:
+#        new_distance_value: float
+#      then:
+#        - lambda: |-
+#            id(last_distance) = float(new_distance_value);
+#        - component.update: clack_distance
+
+globals:
+  - id: totalWaterUsage
+    type: float
+    restore_value: yes
+    initial_value: '0.0'
+
+  # Clack DV flowmeter 28.60  / Clack WS1: 16.30
+  - id: pulse_per_liter
+    type: float
+    restore_value: yes
+    initial_value: '28.60'
+
+  # Define a global variable for the chlorinator delay duration in minutes
+  - id: duration
+    type: int
+    restore_value: yes
+    initial_value: '15'
+
+  # Define a global variable for the leakage delay duration in minutes
+  - id: duration_leakage
+    type: int
+    restore_value: yes
+    initial_value: '30'
+
+  # Define a global variable for the water flow timeout in seconds
+  - id: duration_water_flow_timeout
+    type: float
+    restore_value: yes
+    initial_value: '6.5'
+
+  # Define a global variable for last regeneration time
+  - id: cycle_step
+    type: std::string
+    restore_value: yes
+    initial_value: '"Idle"'
+
+  - id: regen_last
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+  - id: resinclean_last
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+  - id: saltfill_last
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+  # Deprecated in favour of the new "saltfill_last" global variable
+  - id: fill_last
+    type: std::string
+    restore_value: yes
+    initial_value: '"Never"'
+
+  # Define a global variable to store last value of the distance
+  - id: last_distance
+    type: float
+    restore_value: yes
+    initial_value: '0.0'
+
+  # Define a global variable that blocks a new reg cycle
+  - id: wait_on_delay
+    type: bool
+    restore_value: yes
+    initial_value: 'false'
+
+  - id: water_meter_freeze
+    type: bool
+    restore_value: yes
+    initial_value: 'false'
+
+  - id: water_meter_force_overwrite
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: motor_run
+    type: bool
+    restore_value: yes
+    initial_value: 'false'
+
+  # cycle timer
+  - id: start_time
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+  - id: start_time_total
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+  ### record last settings during regen.
+  - id: save_total_operation_time
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+  # Deprecated in favour of the new save_total_operation_time global variable
+  - id: save_total_time_used
+    type: std::string
+    restore_value: yes
+    initial_value: '"Unknown"'
+
+  - id: save_total_liters_used
+    type: float
+    restore_value: yes
+    initial_value: '0.0'
+
+  - id: total_run_time_regen
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+  - id: save_brine_time
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+  - id: save_backwash_time
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+  - id: save_backwash2_time
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+  - id: save_rinse_time
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+  - id: save_fill_time
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+  - id: save_service_time
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+  - id: save_total_run_time
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+  - id: leakage_detected
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+script:
+  # Script "on_boot"
+  - id: on_boot
+    then:
+      - component.update: clack_saltfill_last
+      - component.update: clack_resinclean_last
+      - component.update: clack_regeneration_last
+      - component.update: clack_capacity_days
+      - component.update: clack_time_to_resinclean
+      - component.update: clack_time_to_regen
+      - component.update: clack_distance
+      - pulse_meter.set_total_pulses:
+          id: clack_flow_rate
+          value: !lambda |-
+            return id(totalWaterUsage) * id(pulse_per_liter);
+      - sensor.template.publish:
+          id: clack_flow_rate
+          state: 0
+      - component.update: clack_save_total_liters_used
+      - component.update: clack_save_total_operation_time
+      - component.update: clack_backwash_time
+      - component.update: clack_brine_time
+      - component.update: clack_backwash2_time
+      - component.update: clack_rinse_time
+      - component.update: clack_fill_time
+      - component.update: clack_service_time
+      - component.update: clack_cycle_step
+      - component.update: clack_cycle_runtime
+      - component.update: clack_cycle_total_runtime
+      - component.update: clack_total_run_time
+      - component.update: clack_watermeter_total
+      - light.turn_on:
+          id: status_led
+          effect: slow_pulse
+          red: 100%
+          green: 60%
+          blue: 0%
+      - wait_until:
+          condition:
+            wifi.connected:
+      - light.turn_on:
+          id: status_led
+          effect: slow_pulse
+          red: 0%
+          green: 100%
+          blue: 0%
+      - delay: 3s
+      - light.turn_on:
+          id: status_led
+          effect: none
+          red: 0%
+          green: 100%
+          blue: 0%
+      - delay: 5s
+      - light.turn_off:
+          id: status_led
+
+  # Script "check_leakage"
+  - id: check_leakage
+    mode: restart
+    then:
+      - if:
+          condition:
+            binary_sensor.is_on: clack_water_flowing
+          then:
+            - delay: !lambda "return id(duration_leakage) * 60 * 1000;"
+            - lambda: 'id(leakage_detected) = true;'
+            - wait_until:
+                condition:
+                  binary_sensor.is_off: clack_water_flowing
+                timeout: 20s
+            - lambda: 'id(leakage_detected) = false;'
+
+  # Script "clack_motor_run"
+  - id: clack_motor_run
+    then:
+      - lambda: 'id(motor_run) = true;'
+      - delay: 100ms
+      - lambda: 'id(motor_run) = false;'
+
+  # Script "chlorinator_start"
+  - id: chlorinator_start
+    mode: restart
+    then:
+      - if:
+          condition:
+            - lambda: 'return id(clack_select_chl_or_dpsw).state == "Chlorinator";'
+          then:
+            - switch.turn_on: chlorinator_relay
+            - delay: !lambda "return id(duration) * 60 * 1000;"
+            - switch.turn_off: chlorinator_relay
+
+  # Script "chlorinator_stop"
+  - id: chlorinator_stop
+    mode: restart
+    then:
+      - if:
+          condition:
+            - lambda: 'return id(clack_select_chl_or_dpsw).state == "Chlorinator";'
+          then:
+            - switch.turn_off: chlorinator_relay
+
+  # Script "reset_water_meter"
+  - id: reset_water_meter
+    mode: restart
+    then:
+      - pulse_meter.set_total_pulses:
+          id: clack_flow_rate
+          value: !lambda |-
+            id(water_meter_force_overwrite) = true;
+            return 0;
+
+  # Script "decide_cycle"
+  - id: decide_cycle
+    mode: single
+    then:
+      - script.execute: clack_motor_run
+      - if:
+          condition:
+            lambda: 'return id(wait_on_delay) == false;'
+          then:
+            - lambda: |-
+                std::string clack_cycle = id(clack_select_cycle).state;
+                if (clack_cycle == "${clack_upflow_post_fill}") {
+                  id(cycle_steps_post_upflow).execute();
+                } else if (clack_cycle == "${clack_upflow_pre_fill}") {
+                  id(cycle_steps_pre_upflow).execute();
+                } else if (clack_cycle == "${clack_downflow_post_fill}") {
+                  id(cycle_steps_post_downflow).execute();
+                } else if (clack_cycle == "${clack_downflow_pre_fill}") {
+                  id(cycle_steps_pre_downflow).execute();
+                }
+
+  # Script "cycle_steps_post_upflow"
+  - id: cycle_steps_post_upflow
+    mode: single
+    then:
+      - script.execute: initial_post_cycle_steps
+      - script.execute: start_brine_cycle
+      - script.execute: chlorinator_start
+      - script.wait: chlorinator_start
+      - script.execute: continue_brine_cycle
+      - script.wait: continue_brine_cycle
+      - script.execute: start_backwash_cycle
+      - script.execute: chlorinator_stop
+      - script.execute: continue_backwash_cycle
+      - script.wait: continue_backwash_cycle
+      - script.execute: start_rinse_cycle
+      - script.execute: continue_rinse_cycle
+      - script.wait: continue_rinse_cycle
+      - script.execute: start_fill_cycle
+      - script.execute: continue_fill_cycle
+      - script.wait: continue_fill_cycle
+      - script.execute: update_total_run_time
+      - script.execute: reset_cycle_steps
+      - script.wait: reset_cycle_steps
+
+  # Script "cycle_steps_pre_upflow"
+  - id: cycle_steps_pre_upflow
+    mode: single
+    then:
+      - script.execute: initial_pre_cycle_steps
+      - script.execute: start_fill_cycle
+      - script.execute: continue_fill_cycle
+      - script.wait: continue_fill_cycle
+      - script.execute: start_service_cycle
+      - script.execute: continue_service_cycle
+      - script.wait: continue_service_cycle
+      - script.execute: intermediate_pre_cycle_steps
+      - script.execute: start_brine_cycle
+      - script.execute: chlorinator_start
+      - script.wait: chlorinator_start
+      - script.execute: continue_brine_cycle
+      - script.wait: continue_brine_cycle
+      - script.execute: start_backwash_cycle
+      - script.execute: chlorinator_stop
+      - script.execute: continue_backwash_cycle
+      - script.wait: continue_backwash_cycle
+      - script.execute: start_rinse_cycle
+      - script.execute: continue_rinse_cycle
+      - script.wait: continue_rinse_cycle
+      - script.execute: update_total_run_time
+      - script.execute: reset_cycle_steps
+      - script.wait: reset_cycle_steps
+
+  # Script "cycle_steps_post_downflow"
+  - id: cycle_steps_post_downflow
+    mode: single
+    then:
+      - script.execute: initial_post_cycle_steps
+      - script.execute: start_backwash_cycle
+      - script.execute: continue_backwash_cycle
+      - script.wait: continue_backwash_cycle
+      - script.execute: start_brine_cycle
+      - script.execute: chlorinator_start
+      - script.wait: chlorinator_start
+      - script.execute: continue_brine_cycle
+      - script.wait: continue_brine_cycle
+      - script.execute: start_backwash2_cycle
+      - script.execute: chlorinator_stop
+      - script.execute: continue_backwash2_cycle
+      - script.wait: continue_backwash2_cycle
+      - script.execute: start_rinse_cycle
+      - script.execute: continue_rinse_cycle
+      - script.wait: continue_rinse_cycle
+      - script.execute: start_fill_cycle
+      - script.execute: continue_fill_cycle
+      - script.wait: continue_fill_cycle
+      - script.execute: update_total_run_time
+      - script.execute: reset_cycle_steps
+      - script.wait: reset_cycle_steps
+
+  # Script "cycle_steps_pre_downflow"
+  - id: cycle_steps_pre_downflow
+    mode: single
+    then:
+      - script.execute: initial_pre_cycle_steps
+      - script.execute: start_fill_cycle
+      - script.execute: continue_fill_cycle
+      - script.wait: continue_fill_cycle
+      - script.execute: start_service_cycle
+      - script.execute: continue_service_cycle
+      - script.wait: continue_service_cycle
+      - script.execute: intermediate_pre_cycle_steps
+      - script.execute: start_backwash_cycle
+      - script.execute: continue_backwash_cycle
+      - script.wait: continue_backwash_cycle
+      - script.execute: start_brine_cycle
+      - script.execute: chlorinator_start
+      - script.wait: chlorinator_start
+      - script.execute: continue_brine_cycle
+      - script.wait: continue_brine_cycle
+      - script.execute: start_backwash2_cycle
+      - script.execute: chlorinator_stop
+      - script.execute: continue_backwash2_cycle
+      - script.wait: continue_backwash2_cycle
+      - script.execute: start_rinse_cycle
+      - script.execute: continue_rinse_cycle
+      - script.wait: continue_rinse_cycle
+      - script.execute: update_total_run_time
+      - script.execute: reset_cycle_steps
+      - script.wait: reset_cycle_steps
+
+  ## Cycle step scripts
+  - id: update_total_liters_used
+    mode: single
+    then:
+      - lambda: |-
+          id(save_total_liters_used) = id(totalWaterUsage);
+      - component.update: clack_save_total_liters_used
+
+  - id: update_total_operation_time
+    mode: single
+    then:
+      - lambda: |-
+          id(save_total_operation_time) = id(sntp_time).now().timestamp - id(regen_last);
+      - component.update: clack_save_total_operation_time
+
+  - id: update_regen_last
+    mode: single
+    then:
+      - lambda: |-
+          id(regen_last) = id(sntp_time).now().timestamp;
+      - component.update: clack_regeneration_last
+
+  - id: update_regeneration_start_time
+    mode: single
+    then:
+      - lambda: |-
+          id(start_time_total) = id(sntp_time).now().timestamp;
+      - component.update: clack_cycle_total_runtime
+
+  - id: start_brine_cycle
+    mode: single
+    then:
+      - lambda: |-
+          id(cycle_step) = "Brine";
+          id(start_time) = id(sntp_time).now().timestamp;
+      - component.update: clack_cycle_step
+
+  - id: continue_brine_cycle
+    mode: single
+    then:
+      - delay: 10s
+      - wait_until:
+          condition:
+            binary_sensor.is_on: bin_sens_motor_run
+          timeout: 4800s
+      - lambda: |-
+          id(save_brine_time) = id(clack_cycle_runtime).state;
+      - component.update: clack_brine_time
+
+  - id: start_backwash_cycle
+    mode: single
+    then:
+      - lambda: |-
+          id(cycle_step) = "Backwash";
+          id(start_time) = id(sntp_time).now().timestamp;
+      - component.update: clack_cycle_step
+
+  - id: continue_backwash_cycle
+    mode: single
+    then:
+      - delay: 10s
+      - wait_until:
+          condition:
+            binary_sensor.is_on: bin_sens_motor_run
+          timeout: 1000s
+      - lambda: |-
+          id(save_backwash_time) = id(clack_cycle_runtime).state;
+      - component.update: clack_backwash_time
+
+  - id: start_backwash2_cycle
+    mode: single
+    then:
+      - lambda: |-
+          id(cycle_step) = "Backwash2";
+          id(start_time) = id(sntp_time).now().timestamp;
+      - component.update: clack_cycle_step
+
+  - id: continue_backwash2_cycle
+    mode: single
+    then:
+      - delay: 10s
+      - wait_until:
+          condition:
+            binary_sensor.is_on: bin_sens_motor_run
+          timeout: 1000s
+      - lambda: |-
+          id(save_backwash2_time) = id(clack_cycle_runtime).state;
+      - component.update: clack_backwash2_time
+
+  - id: start_rinse_cycle
+    mode: single
+    then:
+      - lambda: |-
+          id(cycle_step) = "Rinse";
+          id(start_time) = id(sntp_time).now().timestamp;
+      - component.update: clack_cycle_step
+
+  - id: continue_rinse_cycle
+    mode: single
+    then:
+      - delay: 10s
+      - wait_until:
+          condition:
+            binary_sensor.is_on: bin_sens_motor_run
+          timeout: 1000s
+      - lambda: |-
+          id(save_rinse_time) = id(clack_cycle_runtime).state;
+      - component.update: clack_rinse_time
+
+  - id: start_fill_cycle
+    mode: single
+    then:
+      - lambda: |-
+          id(cycle_step) = "Fill";
+          id(start_time) = id(sntp_time).now().timestamp;
+      - component.update: clack_cycle_step
+
+  - id: continue_fill_cycle
+    mode: single
+    then:
+      - delay: 10s
+      - wait_until:
+          condition:
+            binary_sensor.is_on: bin_sens_motor_run
+          timeout: 400s
+      - lambda: |-
+          id(save_fill_time) = id(clack_cycle_runtime).state;
+      - component.update: clack_fill_time
+
+  - id: start_service_cycle
+    mode: single
+    then:
+      - lambda: |-
+          id(cycle_step) = "Service";
+          id(start_time) = id(sntp_time).now().timestamp;
+      - component.update: clack_cycle_step
+
+  - id: continue_service_cycle
+    mode: single
+    then:
+      - delay: 10s
+      - wait_until:
+          condition:
+            binary_sensor.is_on: bin_sens_motor_run
+          timeout: 14500s
+      - lambda: |-
+          id(save_service_time) = id(clack_cycle_runtime).state;
+      - component.update: clack_service_time
+
+  - id: initial_post_cycle_steps
+    mode: single
+    then:
+      - lambda: id(wait_on_delay) = true;
+      - lambda: id(water_meter_freeze) = true;
+      - script.execute: update_total_liters_used
+      - script.execute: update_total_operation_time
+      - script.execute: update_regen_last
+      - script.execute: reset_water_meter
+      - script.execute: update_regeneration_start_time
+
+  - id: initial_pre_cycle_steps
+    mode: single
+    then:
+      - lambda: id(wait_on_delay) = true;
+      - script.execute: update_regeneration_start_time
+
+  - id: intermediate_pre_cycle_steps
+    mode: single
+    then:
+      - script.execute: update_total_liters_used
+      - script.execute: update_total_operation_time
+      - script.execute: update_regen_last
+      - script.execute: reset_water_meter
+      - lambda: id(water_meter_freeze) = true;
+
+  - id: update_total_run_time
+    mode: single
+    then:
+      - lambda: |-
+          id(save_total_run_time) = id(sntp_time).now().timestamp - id(start_time_total);
+      - component.update: clack_total_run_time
+
+  - id: reset_cycle_steps
+    mode: single
+    then:
+      - lambda: |-
+          id(cycle_step) = "Idle";
+          id(start_time) = 0;
+          id(start_time_total) = 0;
+      - component.update: clack_cycle_step
+      - component.update: clack_cycle_runtime
+      - component.update: clack_cycle_total_runtime
+      - lambda: |-
+          id(wait_on_delay) = false;
+          id(water_meter_freeze) = false;
+      - delay: 5s
+
+interval:
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(start_time) > 0;
+          then:
+            - component.update: clack_cycle_runtime
+      - if:
+          condition:
+            lambda: |-
+              return id(start_time_total) > 0;
+          then:
+            - component.update: clack_cycle_total_runtime
+
+binary_sensor:
+  - platform: status
+    name: ${clack_status}
+
+  - platform: template
+    name: ${clack_motor_running}
+    id: bin_sens_motor_run
+    internal: false
+    lambda: |-
+      if (id(motor_run)) {
+        return true;
+      } else {
+        return false;
+      }
+
+  - platform: template
+    name: ${clack_water_flowing}
+    id: clack_water_flowing
+    lambda: |-
+      return (id(clack_flow_rate).state > 0);
+    on_state:
+      - if:
+          condition:
+            binary_sensor.is_on: clack_water_flowing
+          then:
+            - script.execute: check_leakage
+
+  - platform: template
+    name: ${clack_water_leakage}
+    icon: mdi:home-flood
+    id: clack_water_leakage
+    lambda: |-
+      return id(leakage_detected);
+
+button:
+  ### ESP restart button
+  - platform: restart
+    id: restart_button
+    name: ${clack_restart}
+    icon: mdi:button-pointer
+
+  - platform: safe_mode
+    id: safe_mode_button
+    name: ${clack_safe_mode}
+    icon: mdi:button-pointer
+
+  - platform: template
+    name: ${clack_test_motor_run}
+    id: test_motor_run
+    on_press:
+      then:
+        - script.execute: clack_motor_run
+        - if:
+            condition:
+              lambda: 'return id(wait_on_delay) == false;'
+            then:
+              - script.execute: decide_cycle
+
+#-----------
+#SENSORS
+#-----------
+sensor:
+  ##
+  # Power meter - ch1- clack pcb / ch2- Atom s3 lite esp / ch3- chlorinator
+  - platform: ina3221
+    address: 0x41  #A0-VCC
+    channel_1:
+      shunt_resistance: 0.1 ohm
+      power:
+        id: ch1_power
+        internal: true
+        filters:
+          - lambda: |-
+              if (isnan(x)) {
+                return 0;
+              } else {
+                return x;
+              }
+          - or:
+            - delta: 0.5
+            - median:
+                window_size: 7
+                send_every: 4
+                send_first_at: 3
+          - round: 1
+        on_value:
+          - component.update: clack_power
+        on_value_range:
+          - above: 1.0
+            then:
+              - script.execute: decide_cycle
+      bus_voltage:
+        id: ch1_voltage
+        internal: true
+        filters:
+          - lambda: |-
+              if (isnan(x)) {
+                return 0;
+              } else {
+                return x;
+              }
+          - median:
+              window_size: 7
+              send_every: 4
+              send_first_at: 3
+          - delta: 0.1
+          - round: 1
+        on_value:
+          then:
+            - component.update: clack_voltage
+
+    channel_2:
+      shunt_resistance: 0.1 ohm
+      power:
+        id: ch2_power
+        internal: true
+        filters:
+          - lambda: |-
+              if (isnan(x)) {
+                return 0;
+              } else {
+                return x;
+              }
+          - median:
+              window_size: 7
+              send_every: 4
+              send_first_at: 3
+          - delta: 0.1
+          - round: 1
+        on_value:
+          - component.update: clack_power_esp
+
+    channel_3:
+      shunt_resistance: 0.1 ohm
+      power:
+        id: ch3_power
+        internal: true
+        filters:
+          - lambda: |-
+              if (isnan(x)) {
+                return 0;
+              } else {
+                return x;
+              }
+          - median:
+              window_size: 7
+              send_every: 4
+              send_first_at: 3
+          - delta: 0.2
+          - round: 1
+        on_value:
+          - component.update: clack_power_chlorinator
+    update_interval: 1s
+
+  ##
+  # Time Of Flight distance sensor.
+  - platform: template
+    name: ${clack_distance}
+    id: clack_distance
+    unit_of_measurement: cm
+    accuracy_decimals: 1
+    icon: "mdi:arrow-expand-vertical"
+    device_class: distance
+    state_class: measurement
+    update_interval: never
+    lambda:
+      return id(last_distance);
+    on_value:
+      then:
+        - component.update: clack_height
+
+  # Sensor "clack_watermeter_total"
+  - platform: template
+    id: clack_watermeter_total
+    name: ${clack_watermeter_total}
+    unit_of_measurement: L
+    device_class: water
+    state_class: total
+    accuracy_decimals: 1
+    update_interval: never
+    lambda: |-
+      return id(totalWaterUsage);
+    on_value:
+      then:
+        - component.update: clack_l_left
+
+  # Sensor "clack_voltage"
+  - platform: template
+    id: clack_voltage
+    name: ${clack_voltage}
+    icon: mdi:lightning-bolt
+    unit_of_measurement: V
+    accuracy_decimals: 1
+    device_class: voltage
+    state_class: measurement
+    update_interval: never
+    lambda: |-
+      return id(ch1_voltage).state;
+
+  # Sensor "clack_power"
+  - platform: template
+    id: clack_power
+    name: ${clack_power}
+    icon: mdi:flash
+    unit_of_measurement: W
+    accuracy_decimals: 1
+    device_class: power
+    state_class: measurement
+    update_interval: never
+    lambda: |-
+      return id(ch1_power).state;
+
+  # Sensor "clack_power_esp"
+  - platform: template
+    id: clack_power_esp
+    name: ${clack_power_esp}
+    icon: mdi:flash
+    unit_of_measurement: W
+    accuracy_decimals: 1
+    device_class: power
+    state_class: measurement
+    update_interval: never
+    lambda: |-
+      return id(ch2_power).state;
+
+  # Sensor "clack_power_chlorinator"
+  - platform: template
+    id: clack_power_chlorinator
+    name: ${clack_power_chlorinator}
+    icon: mdi:flash
+    unit_of_measurement: W
+    accuracy_decimals: 1
+    device_class: power
+    state_class: measurement
+    update_interval: never
+    lambda: |-
+      return id(ch3_power).state;
+
+  ##
+  # TOF distance sensor calculate tank_percentage
+  - platform: template
+    id: clack_procent
+    name: ${clack_procent}
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    icon: "mdi:percent-box-outline"
+    update_interval: never
+    state_class: measurement
+    lambda: |-
+      const float max_distance = id(clack_saltlevel_height_max).state;
+      const float min_distance = id(clack_saltlevel_height_min).state;
+      float salt_level_distance = max_distance - min_distance;
+      float salt_level_height = id(clack_height).state;
+      float percentage = (salt_level_height / salt_level_distance) * 100;
+      return int(percentage);
+    filters:
+    - lambda: |-
+        if (x >= 100) return 100;
+        else if (x <= 0) return 0;
+        else return x;
+
+  ##
+  # Saltlevel animation picture on dashboard
+  - platform: copy
+    source_id: clack_procent
+    id: clack_salt_level
+    name: ${clack_animation}
+    filters:
+    - lambda: |-
+        if (x >= 80) return 100;
+        else if (x >= 65 && x <= 79) return 80;
+        else if (x >= 40 && x <= 64) return 60;
+        else if (x >= 20 && x <= 39) return 40;
+        else if (x >= 10 && x <= 19) return 20;
+        else if (x >= 5 && x <= 9) return 10;
+        else if (x <= 4) return 0;
+        else return x;
+
+  ##
+  # TOF distance sensor calculate salt level from bottom
+  - platform: template
+    id: clack_height
+    name: ${clack_height}
+    unit_of_measurement: cm
+    accuracy_decimals: 1
+    icon: "mdi:hydraulic-oil-level"
+    update_interval: ${clack_height_update_interval}
+    device_class: distance
+    state_class: measurement
+    lambda: |-
+      return id(clack_saltlevel_height_max).state - id(clack_distance).state;
+    filters:
+    - lambda: |-
+        if (x >= 100) return 100;
+        else if (x <= 0) return 0;
+        else return x;
+    on_value:
+      - component.update: clack_procent
+      - component.update: clack_fill_salt
+
+  #------
+  # CLACK
+  #------
+  # Sensor "clack_m3_left"
+  - platform: template
+    id: clack_m3_left
+    name: ${clack_m3_left}
+    unit_of_measurement: m³
+    device_class: water
+    state_class: total
+    accuracy_decimals: 2
+    update_interval: never
+    lambda: |-
+      return id(clack_l_left).state * 0.001;
+    filters:
+    - lambda: |-
+        if (x <= 0) return 0;
+        return x;
+
+  # Sensor "clack_l_left"
+  - platform: template
+    id: clack_l_left
+    name: ${clack_l_left}
+    unit_of_measurement: L
+    device_class: water
+    state_class: total
+    accuracy_decimals: 1
+    update_interval: ${watermeter_update_interval}
+    lambda: |-
+      return id(clack_capacity_liters).state - id(totalWaterUsage);
+    filters:
+    - lambda: |-
+        if (x <= 0) return 0;
+        return x;
+    on_value:
+      then:
+        - component.update: clack_m3_left
+        - component.update: clack_percent_l_left
+
+  # Sensor "clack_percent_l_left"
+  - platform: template
+    id: clack_percent_l_left
+    name: ${clack_percent_l_left}
+    icon: mdi:water-percent
+    unit_of_measurement: "%"
+    state_class: measurement
+    accuracy_decimals: 1
+    update_interval: never
+    lambda: |-
+      if (id(clack_capacity_liters).state <= 0) {
+        return 0;
+      }
+      return float((id(clack_l_left).state / id(clack_capacity_liters).state) * 100);
+    filters:
+    - lambda: |-
+        if (x >= 100) return 100;
+        else if (x <= 0) return 0;
+        else return x;
+
+  ##
+  # Sensor "clack_percent_time_left"
+  - platform: template
+    id: clack_percent_time_left
+    name: ${clack_percent_time_left}
+    icon: mdi:progress-clock
+    unit_of_measurement: "%"
+    device_class: ""
+    state_class: measurement
+    accuracy_decimals: 1
+    update_interval: 600s
+    lambda: |-
+      float regen_last_time = id(regen_last);
+      if (regen_last_time <= 0) {
+        return 0;
+      }
+      float current_time = id(sntp_time).now().timestamp;
+      float total_hours = (current_time - regen_last_time) / 3600;
+      float capacity_hours = int(id(clack_capacity_days).state) * 24;
+      float remaining_hours = capacity_hours - total_hours;
+      float percentage = (remaining_hours / capacity_hours) * 100;
+      return percentage;
+    filters:
+    - lambda: |-
+        if (x >= 100) return 100;
+        else if (x <= 0) return 0;
+        else return x;
+
+  ##
+  # Sensor "clack_save_total_operation_time"
+  - platform: template
+    name: clack_save_total_operation_time
+    id: clack_save_total_operation_time
+    icon: mdi:water-check-outline
+    accuracy_decimals: 0
+    update_interval: never
+    internal: true
+    lambda: |-
+      return id(save_total_operation_time);
+    on_value:
+      then:
+        - component.update: clack_save_total_operation_time_txt
+
+  ##
+  # Sensor "clack_save_total_liters_used"
+  - platform: template
+    name: ${clack_save_total_liters_used}
+    id: clack_save_total_liters_used
+    icon: mdi:water-check-outline
+    unit_of_measurement: L
+    device_class: water
+    state_class: total
+    accuracy_decimals: 1
+    update_interval: never
+    lambda: |-
+      return id(save_total_liters_used);
+
+  ##
+  # Sensor "clack_cycle_runtime"
+  - platform: template
+    name: clack_cycle_runtime
+    id: clack_cycle_runtime
+    icon: mdi:clock-start
+    accuracy_decimals: 0
+    update_interval: never
+    internal: true
+    lambda: |-
+      if (id(start_time) > 0) {
+        return id(sntp_time).now().timestamp - id(start_time);
+      }
+      return 0;
+    on_value:
+      then:
+        - component.update: timer1
+
+  ##
+  # Sensor "clack_cycle_total_runtime"
+  - platform: template
+    name: clack_cycle_total_runtime
+    id: clack_cycle_total_runtime
+    icon: mdi:clock-start
+    accuracy_decimals: 0
+    update_interval: never
+    internal: true
+    lambda: |-
+      if (id(start_time_total) > 0) {
+        return id(sntp_time).now().timestamp - id(start_time_total);
+      }
+      return 0;
+    on_value:
+      then:
+        - component.update: timer2
+
+  ## Cycle time sensors
+  - platform: template
+    name: clack_brine_time
+    id: clack_brine_time
+    icon: mdi:clock-check-outline
+    accuracy_decimals: 0
+    update_interval: never
+    internal: true
+    lambda: |-
+      return id(save_brine_time);
+    on_value:
+      then:
+        - component.update: clack_brine_time_txt
+
+  - platform: template
+    name: clack_backwash_time
+    id: clack_backwash_time
+    icon: mdi:clock-check-outline
+    accuracy_decimals: 0
+    update_interval: never
+    internal: true
+    lambda: |-
+      return id(save_backwash_time);
+    on_value:
+      then:
+        - component.update: clack_backwash_time_txt
+
+  - platform: template
+    name: clack_backwash2_time
+    id: clack_backwash2_time
+    icon: mdi:clock-check-outline
+    accuracy_decimals: 0
+    update_interval: never
+    internal: true
+    lambda: |-
+      return id(save_backwash2_time);
+    on_value:
+      then:
+        - component.update: clack_backwash2_time_txt
+
+  - platform: template
+    name: clack_rinse_time
+    id: clack_rinse_time
+    icon: mdi:clock-check-outline
+    accuracy_decimals: 0
+    update_interval: never
+    internal: true
+    lambda: |-
+      return id(save_rinse_time);
+    on_value:
+      then:
+        - component.update: clack_rinse_time_txt
+
+  - platform: template
+    name: clack_fill_time
+    id: clack_fill_time
+    icon: mdi:clock-check-outline
+    accuracy_decimals: 0
+    update_interval: never
+    internal: true
+    lambda: |-
+      return id(save_fill_time);
+    on_value:
+      then:
+        - component.update: clack_fill_time_txt
+
+  - platform: template
+    name: clack_service_time
+    id: clack_service_time
+    icon: mdi:clock-check-outline
+    accuracy_decimals: 0
+    update_interval: never
+    internal: true
+    lambda: |-
+      return id(save_service_time);
+    on_value:
+      then:
+        - component.update: clack_service_time_txt
+
+  - platform: template
+    name: clack_total_run_time
+    id: clack_total_run_time
+    icon: mdi:clock-check-outline
+    accuracy_decimals: 0
+    update_interval: never
+    internal: true
+    lambda: |-
+      return id(save_total_run_time);
+    on_value:
+      then:
+        - component.update: clack_total_run_time_txt
+
+  # Internal temperature
+  - platform: internal_temperature
+    name: "Internal Temperature"
+    device_class: temperature
+    state_class: measurement
+
+  ##
+  # Water hardness in French degrees (auto-calculated: 1°D = 1.786°F)
+  - platform: template
+    id: clack_water_hardness_f
+    name: ${clack_water_hardness_f}
+    unit_of_measurement: "°F"
+    icon: mdi:water-opacity
+    accuracy_decimals: 1
+    update_interval: never
+
+select:
+  # Select "clack_select_chl_or_dpsw"
+  - id: clack_select_chl_or_dpsw
+    name: ${clack_select_chl_or_dpsw}
+    platform: template
+    options:
+      - ${clack_off}
+      - ${clack_chlorinator}
+    initial_option: ${clack_off}
+    optimistic: true
+    restore_value: true
+    entity_category: config
+    update_interval: never
+
+  # Select "clack_select_cycle"
+  - id: clack_select_cycle
+    name: ${clack_regeneration_mode}
+    platform: template
+    optimistic: true
+    restore_value: true
+    options:
+      - ${clack_upflow_post_fill}
+      - ${clack_upflow_pre_fill}
+      - ${clack_downflow_post_fill}
+      - ${clack_downflow_pre_fill}
+    initial_option: ${clack_downflow_post_fill}
+    entity_category: config
+    update_interval: never
+
+##
+# Text sensors with general information.
+text_sensor:
+  ##
+  # Expose ESPHome version as sensor.
+  - platform: version
+    id: clack_version
+    name: ${clack_version}
+    hide_timestamp: true
+
+  ##
+  # Expose WiFi information as sensors.
+  - platform: wifi_info
+    ip_address:
+      name: ${clack_ip}
+      icon: mdi:ip-network
+
+  ##
+  # Textsensor "clack_fill_salt" yes or no.
+  - platform: template
+    name: ${clack_fill_salt}
+    id: clack_fill_salt
+    icon: mdi:basket-fill
+    update_interval: never
+    lambda: |-
+      if (id(clack_height).state < id(clack_saltlevel_height_fill).state) {
+        return std::string("${clack_yes}");
+      } else {
+        return std::string("${clack_no}");
+      }
+
+  ##
+  # Textsensor "clack_cycle_step"
+  - platform: template
+    name: ${clack_cycle_step}
+    id: clack_cycle_step
+    icon: mdi:basket-fill
+    update_interval: never
+    lambda: |-
+      return id(cycle_step);
+
+  ##
+  # Textsensor "clack_time_to_regen"
+  - platform: template
+    name: ${clack_time_to_regen}
+    id: clack_time_to_regen
+    icon: mdi:clock-outline
+    update_interval: 600s
+    lambda: |-
+      char str[32];
+      int64_t regen_last_time = id(regen_last);
+      if (regen_last_time <= 0) {
+        return std::string("Unknown");
+      }
+      int64_t current_time = id(sntp_time).now().timestamp;
+      int64_t total_hours = (current_time - regen_last_time) / 3600;
+      int64_t capacity_hours = int(id(clack_capacity_days).state) * 24;
+      int64_t remaining_hours = capacity_hours - total_hours;
+      int days = remaining_hours / 24;
+      int hours = remaining_hours % 24;
+      ${format_datetime_dh}
+
+  ##
+  # Textsensor "clack_time_to_resinclean"
+  - platform: template
+    name: ${clack_time_to_resinclean}
+    id: clack_time_to_resinclean
+    icon: mdi:bacteria-outline
+    update_interval: 600s
+    lambda: |-
+      char str[32];
+      int64_t resinclean_last_time = id(resinclean_last);
+      if (resinclean_last_time <= 0) {
+        return std::string("Unknown");
+      }
+      int64_t current_time = id(sntp_time).now().timestamp;
+      int64_t total_hours = (current_time - resinclean_last_time) / 3600;
+      int64_t capacity_hours = int(id(resinclean_capacity_days).state) * 24;
+      int64_t remaining_hours = capacity_hours - total_hours;
+      int days = remaining_hours / 24;
+      int hours = remaining_hours % 24;
+      ${format_datetime_dh}
+
+  ##
+  # Textsensor "timer1"
+  - platform: template
+    name: ${clack_cycle_runtime}
+    id: timer1
+    icon: mdi:clock-start
+    update_interval: never
+    lambda: |-
+      int time = int(id(clack_cycle_runtime).state);
+      ${format_datetime_hms}
+
+  # Textsensor "timer2"
+  - platform: template
+    name: ${clack_cycle_total_runtime}
+    id: timer2
+    icon: mdi:clock-start
+    update_interval: never
+    lambda: |-
+      int time = int(id(clack_cycle_total_runtime).state);
+      ${format_datetime_hms}
+
+  ##
+  # Textsensor "clack_save_total_operation_time_txt"
+  - platform: template
+    name: ${clack_save_total_operation_time}
+    id: clack_save_total_operation_time_txt
+    icon: mdi:clock-check-outline
+    update_interval: never
+    lambda: |-
+      char str[32];
+      int64_t operation_time = int(id(clack_save_total_operation_time).state);
+      if (operation_time <= 0) {
+        ESP_LOGI("main", "Fallback to 'save_total_time_used': %f", id(save_total_time_used));
+        return std::string(id(save_total_time_used));
+      }
+      int64_t total_hours = operation_time / 3600;
+      int days = total_hours / 24;
+      int hours = total_hours % 24;
+      ${format_datetime_dh}
+
+  ### saved times previous cycle to formatted text.
+  - platform: template
+    name: ${clack_brine_time_txt}
+    id: clack_brine_time_txt
+    icon: mdi:clock-check-outline
+    update_interval: never
+    lambda: |-
+      int time = int(id(clack_brine_time).state);
+      ${format_datetime_hms}
+
+  - platform: template
+    name: ${clack_backwash_time_txt}
+    id: clack_backwash_time_txt
+    icon: mdi:clock-check-outline
+    update_interval: never
+    lambda: |-
+      int time = int(id(clack_backwash_time).state);
+      ${format_datetime_hms}
+
+  - platform: template
+    name: ${clack_backwash2_time_txt}
+    id: clack_backwash2_time_txt
+    icon: mdi:clock-check-outline
+    update_interval: never
+    lambda: |-
+      int time = int(id(clack_backwash2_time).state);
+      ${format_datetime_hms}
+
+  - platform: template
+    name: ${clack_rinse_time_txt}
+    id: clack_rinse_time_txt
+    icon: mdi:clock-check-outline
+    update_interval: never
+    lambda: |-
+      int time = int(id(clack_rinse_time).state);
+      ${format_datetime_hms}
+
+  - platform: template
+    name: ${clack_fill_time_txt}
+    id: clack_fill_time_txt
+    icon: mdi:clock-check-outline
+    update_interval: never
+    lambda: |-
+      int time = int(id(clack_fill_time).state);
+      ${format_datetime_hms}
+
+  - platform: template
+    name: ${clack_service_time_txt}
+    id: clack_service_time_txt
+    icon: mdi:clock-check-outline
+    update_interval: never
+    lambda: |-
+      int time = int(id(clack_service_time).state);
+      ${format_datetime_hms}
+
+  - platform: template
+    name: ${clack_total_run_time_txt}
+    id: clack_total_run_time_txt
+    icon: mdi:clock-check-outline
+    update_interval: never
+    lambda: |-
+      int time = int(id(clack_total_run_time).state);
+      ${format_datetime_hms}
+
+  ##
+  # Water hardness category (auto-calculated from °D input)
+  - platform: template
+    name: ${clack_water_hardness_category}
+    id: clack_water_hardness_category
+    icon: mdi:water-thermometer
+    update_interval: never
+
+##
+# imput numbers as sliders for setting the dimensions of the tank and level alarm.
+number:
+  ##
+  # Set pulse per liters flowmeter
+  - platform: template
+    id: clack_set_pulse_per_liters
+    name: ${clack_set_pulse_per_liters}
+    icon: mdi:pulse
+    optimistic: true
+    mode: box
+    step: 0.05
+    entity_category: config
+    min_value: 0
+    max_value: 50
+    initial_value: 28.60
+    restore_value: yes
+    unit_of_measurement: ""
+    on_value:
+      then:
+        - lambda: |-
+            id(pulse_per_liter) = float(x);
+
+  ##
+  # Set minimum distance (from bottom sensor / above plastic cap)
+  - platform: template
+    id: clack_saltlevel_height_min
+    name: ${clack_saltlevel_height_min}
+    icon: mdi:toggle-switch-variant
+    optimistic: true
+    mode: slider
+    step: 0.5
+    entity_category: config
+    min_value: 0
+    max_value: 10
+    initial_value: 0
+    restore_value: yes
+    unit_of_measurement: cm
+    on_value:
+      then:
+        - component.update: clack_height
+
+  ##
+  # Set maximum distance
+  - platform: template
+    id: clack_saltlevel_height_max
+    name: ${clack_saltlevel_height_max}
+    icon: mdi:toggle-switch-variant-off
+    optimistic: true
+    mode: slider
+    step: 0.5
+    entity_category: config
+    min_value: 0
+    max_value: 100
+    initial_value: 30
+    restore_value: yes
+    unit_of_measurement: cm
+    on_value:
+      then:
+        - component.update: clack_height
+
+  ##
+  # Set alarm level
+  - platform: template
+    id: clack_saltlevel_height_fill
+    name: ${clack_saltlevel_height_fill}
+    icon: mdi:hydraulic-oil-temperature
+    optimistic: true
+    mode: slider
+    step: 0.1
+    entity_category: config
+    min_value: 0
+    max_value: 10
+    initial_value: 1.5
+    restore_value: yes
+    unit_of_measurement: cm
+    update_interval: never
+    on_value:
+      then:
+        - component.update: clack_height
+
+  ##
+  # Set capacity liters
+  - platform: template
+    id: clack_capacity_liters
+    name: ${clack_capacity_liters}
+    icon: mdi:water-opacity
+    optimistic: true
+    mode: box
+    step: 50
+    entity_category: config
+    min_value: 0
+    max_value: 12000
+    initial_value: 3700
+    restore_value: yes
+    unit_of_measurement: L
+    on_value:
+      then:
+        - component.update: clack_l_left
+
+  ##
+  # Set capacity days
+  - platform: template
+    id: clack_capacity_days
+    name: ${clack_capacity_days}
+    icon: mdi:calendar-clock
+    optimistic: true
+    mode: box
+    step: 1
+    entity_category: config
+    min_value: 0
+    max_value: 21
+    initial_value: 14
+    restore_value: yes
+    unit_of_measurement: ${days}
+    on_value:
+      then:
+        - component.update: clack_time_to_regen
+        - component.update: clack_percent_time_left
+
+  ##
+  # Set resinclean capacity days
+  - platform: template
+    id: resinclean_capacity_days
+    name: ${clack_resinclean_capacity_days}
+    icon: mdi:calendar-clock
+    optimistic: true
+    mode: box
+    step: 1
+    entity_category: config
+    min_value: 0
+    max_value: 365
+    initial_value: 120
+    restore_value: yes
+    unit_of_measurement: ${days}
+    on_value:
+      then:
+        - component.update: clack_time_to_resinclean
+
+  ##
+  # Set chlorinator relay off-delay
+  - platform: template
+    id: clack_chlorinator_delay
+    name: ${clack_chlorinator_delay}
+    icon: mdi:toggle-switch-variant
+    optimistic: true
+    mode: box
+    step: 1
+    entity_category: config
+    min_value: 0
+    max_value: 45
+    initial_value: 10
+    restore_value: yes
+    unit_of_measurement: "min"
+    on_value:
+      then:
+        - lambda: |-
+            id(duration) = int(x);
+
+  ##
+  # Set minimum time delay for leakage alarm
+  - platform: template
+    id: clack_leakage_alarm_delay
+    name: ${clack_leakage_alarm_delay}
+    icon: mdi:home-flood
+    optimistic: true
+    mode: box
+    step: 1
+    entity_category: config
+    min_value: 0
+    max_value: 60
+    initial_value: 30
+    restore_value: yes
+    unit_of_measurement: "min"
+    on_value:
+      then:
+        - lambda: |-
+            id(duration_leakage) = int(x);
+
+  ##
+  # Set minimum time delay for considering water flow stopped
+  - platform: template
+    id: clack_water_flow_timeout_delay
+    name: ${clack_water_flow_timeout_delay}
+    icon: mdi:waves-arrow-right
+    optimistic: true
+    mode: box
+    step: 0.1
+    entity_category: config
+    min_value: 0
+    max_value: 300
+    initial_value: 6.5
+    restore_value: yes
+    unit_of_measurement: "s"
+    on_value:
+      then:
+        - lambda: |-
+            id(duration_water_flow_timeout) = float(x);
+        - lambda: |-
+            uint32_t timeout = id(duration_water_flow_timeout) * 1000000UL;
+            id(clack_flow_rate).set_timeout_us(timeout);
+
+  ##
+  # Water hardness in German degrees (°D)
+  - platform: template
+    id: clack_water_hardness_d
+    name: ${clack_water_hardness_d}
+    icon: mdi:water-opacity
+    optimistic: true
+    mode: slider
+    step: 0.5
+    entity_category: config
+    min_value: 0
+    max_value: 35
+    initial_value: 16
+    restore_value: yes
+    unit_of_measurement: "°D"
+    on_value:
+      then:
+        - sensor.template.publish:
+            id: clack_water_hardness_f
+            state: !lambda |-
+              return x / 0.56;
+        - text_sensor.template.publish:
+            id: clack_water_hardness_category
+            state: !lambda |-
+              if (x > 25) return {"${clack_hardness_very_hard}"};
+              else if (x > 17) return {"${clack_hardness_hard}"};
+              else if (x > 8) return {"${clack_hardness_medium}"};
+              else if (x > 4) return {"${clack_hardness_soft}"};
+              else return {"${clack_hardness_very_soft}"};
+
+substitutions:
+  format_datetime_readable: |-
+    char str[32];
+    strftime(str, sizeof(str), "%a %d %b %H:%M", localtime(&datetime));
+    return std::string(str);
+
+  format_datetime_hms: |-
+    char str[32];
+    int sec = time;
+    int min = sec / 60;
+    int hrs = sec / 3600;
+    sec %= 60;
+    min %= 60;
+    if (hrs > 0) {
+      snprintf(str, sizeof(str), "%ih %im %is", hrs, min, sec);
+    } else if (min > 0) {
+      snprintf(str, sizeof(str), "%im %is", min, sec);
+    } else {
+      snprintf(str, sizeof(str), "%is", sec);
+    }
+    return std::string(str);
+
+  format_datetime_dh: |-
+    if (days > 0) {
+      snprintf(str, sizeof(str), "%id %ih", days, hours);
+    } else {
+      snprintf(str, sizeof(str), "%ih", hours);
+    }
+    return std::string(str);

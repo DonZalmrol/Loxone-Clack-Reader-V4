@@ -1,0 +1,49 @@
+sensor:
+  # Sensor "clack_flow_rate"
+  - platform: pulse_meter
+    name: ${clack_flow_rate}
+    pin:
+      number: GPIO7
+      mode:
+        input: true
+        pullup: true
+    internal_filter_mode: PULSE
+    filters:
+      - throttle_average: 300ms
+      - lambda: |-
+          return x / id(pulse_per_liter);
+    on_value:
+      then:
+        - lambda: |-
+            ESP_LOGI("main", "Raw value of 'clack_flow_rate': %f", id(clack_flow_rate).raw_state);
+            ESP_LOGI("main", "Filtered value of 'clack_flow_rate': %f", id(clack_flow_rate).state);
+    timeout: 6.5s
+    icon: mdi:waves-arrow-right
+    unit_of_measurement: L/min
+    accuracy_decimals: 2
+    id: clack_flow_rate
+    device_class: volume_flow_rate
+    state_class: measurement
+
+    total:
+      id: clack_watermeter
+      name: clack_watermeter
+      icon: mdi:water
+      internal: true
+      unit_of_measurement: L
+      device_class: water
+      state_class: total_increasing
+      accuracy_decimals: 1
+      filters:
+        - lambda: |-
+            return x / id(pulse_per_liter);
+      on_value:
+        then:
+          - lambda: |-
+              ESP_LOGI("main", "Value of 'clack_watermeter': %f", id(clack_watermeter).state);
+              ESP_LOGI("main", "Force overwrite 'totalWaterUsage'? %s", id(water_meter_force_overwrite) ? "Yes" : "No");
+              if (id(water_meter_force_overwrite) || id(clack_watermeter).state > 0) {
+                id(totalWaterUsage) = id(clack_watermeter).state;
+                id(water_meter_force_overwrite) = false;
+              }
+          - component.update: clack_watermeter_total
