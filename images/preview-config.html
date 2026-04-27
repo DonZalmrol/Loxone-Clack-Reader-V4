@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clack V3 — Configuration Preview</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f172a;--card:#1e293b;--card-hover:#273548;
+  --text:#e2e8f0;--text-dim:#94a3b8;--accent:#38bdf8;
+  --green:#4ade80;--yellow:#facc15;--red:#f87171;--blue:#60a5fa;
+  --input-bg:#334155;--input-border:#475569;
+  --radius:12px;--shadow:0 4px 24px rgba(0,0,0,.3);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;padding:16px}
+.banner{text-align:center;padding:8px;background:#334155;border-radius:8px;
+  margin-bottom:16px;font-size:.8em;color:var(--yellow)}
+.header{text-align:center;padding:20px 0 10px;margin-bottom:20px}
+.header h1{font-size:1.6em;font-weight:700;color:var(--accent);letter-spacing:-.5px}
+.header .sub{font-size:.85em;color:var(--text-dim);margin-top:4px}
+.container{max-width:800px;margin:0 auto}
+.section{margin-bottom:24px}
+.section h2{font-size:1.1em;color:var(--accent);margin-bottom:12px;padding-bottom:8px;
+  border-bottom:1px solid var(--input-border);display:flex;align-items:center;gap:8px}
+.card{background:var(--card);border-radius:var(--radius);padding:16px 20px;
+  box-shadow:var(--shadow);margin-bottom:10px;transition:background .2s}
+.card:hover{background:var(--card-hover)}
+.card .label{font-size:.8em;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--text-dim);margin-bottom:8px}
+.card .row{display:flex;align-items:center;gap:12px}
+.card .row input[type=range]{flex:1;accent-color:var(--accent);height:6px}
+.card .row .val{min-width:70px;text-align:right;font-weight:600;font-size:1.1em}
+.card .row .unit{color:var(--text-dim);font-size:.85em;margin-left:2px}
+input[type=number],input[type=text],input[type=password]{
+  background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;
+  color:var(--text);padding:8px 12px;font-size:.95em;width:100%;outline:none;
+  transition:border-color .2s}
+input:focus{border-color:var(--accent)}
+select{background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;
+  color:var(--text);padding:8px 12px;font-size:.95em;width:100%;outline:none;
+  appearance:none;cursor:pointer}
+.toggle-wrap{display:flex;align-items:center;justify-content:space-between}
+.toggle{position:relative;width:48px;height:26px;cursor:pointer}
+.toggle input{display:none}
+.toggle .slider{position:absolute;inset:0;background:var(--input-border);border-radius:13px;
+  transition:.25s}
+.toggle .slider:before{content:'';position:absolute;width:20px;height:20px;left:3px;
+  bottom:3px;background:var(--text);border-radius:50%;transition:.25s}
+.toggle input:checked+.slider{background:var(--accent)}
+.toggle input:checked+.slider:before{transform:translateX(22px)}
+.toggle-label{font-weight:600;font-size:1em}
+.btn{background:var(--accent);color:#0f172a;border:none;border-radius:8px;
+  padding:10px 24px;font-size:.95em;font-weight:600;cursor:pointer;
+  transition:opacity .2s,transform .1s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{opacity:.9;transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.danger{background:var(--red)}
+.btn.secondary{background:var(--input-border);color:var(--text)}
+.btn-row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.wifi-info{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:.9em;margin-bottom:16px}
+.wifi-info .lbl{color:var(--text-dim)}
+.wifi-info .val{font-weight:600}
+.wifi-form{display:grid;gap:10px}
+.form-row{display:grid;gap:4px}
+.form-row label{font-size:.8em;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px}
+.password-wrap{position:relative}
+.password-wrap input{padding-right:40px}
+.password-wrap .eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  cursor:pointer;font-size:1.1em;color:var(--text-dim);user-select:none}
+.links{text-align:center;margin-top:24px;padding:12px 0;font-size:.8em}
+.links a{color:var(--accent);text-decoration:none;margin:0 12px}
+.links a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="banner">&#x1F4F7; STATIC PREVIEW — This is a dummy mockup of the /config page with sample data</div>
+
+<div class="header">
+  <h1>&#x2699; Configuration</h1>
+  <div class="sub">Clack Reader V3 Settings</div>
+</div>
+
+<div class="container">
+  <!-- Numbers / Sliders -->
+  <div class="section">
+    <h2>&#x1F4CF; Sensor &amp; Capacity Settings</h2>
+
+    <div class="card">
+      <div class="label">Set pulse per ltr</div>
+      <div class="row">
+        <input type="range" min="0" max="50" step="0.05" value="28.60" disabled>
+        <span class="val">28.60</span>
+        <span class="unit"></span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <input type="number" min="0" max="50" step="0.05" value="28.60" style="width:120px" disabled>
+        <button class="btn">Set</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">Min salt distance</div>
+      <div class="row">
+        <input type="range" min="0" max="10" step="0.5" value="2" disabled>
+        <span class="val">2.0</span>
+        <span class="unit">cm</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <input type="number" min="0" max="10" step="0.5" value="2" style="width:120px" disabled>
+        <button class="btn">Set</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">Max salt distance</div>
+      <div class="row">
+        <input type="range" min="0" max="100" step="0.5" value="35" disabled>
+        <span class="val">35.0</span>
+        <span class="unit">cm</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <input type="number" min="0" max="100" step="0.5" value="35" style="width:120px" disabled>
+        <button class="btn">Set</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">Fill salt distance</div>
+      <div class="row">
+        <input type="range" min="0" max="10" step="0.1" value="3" disabled>
+        <span class="val">3.0</span>
+        <span class="unit">cm</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <input type="number" min="0" max="10" step="0.1" value="3" style="width:120px" disabled>
+        <button class="btn">Set</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">Capacity in liters</div>
+      <div class="row">
+        <input type="range" min="0" max="12000" step="50" value="3700" disabled>
+        <span class="val">3700</span>
+        <span class="unit">L</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <input type="number" min="0" max="12000" step="50" value="3700" style="width:120px" disabled>
+        <button class="btn">Set</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">Capacity in days</div>
+      <div class="row">
+        <input type="range" min="0" max="21" step="1" value="14" disabled>
+        <span class="val">14</span>
+        <span class="unit">days</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <input type="number" min="0" max="21" step="1" value="14" style="width:120px" disabled>
+        <button class="btn">Set</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">Resinclean days</div>
+      <div class="row">
+        <input type="range" min="0" max="365" step="1" value="120" disabled>
+        <span class="val">120</span>
+        <span class="unit">days</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <input type="number" min="0" max="365" step="1" value="120" style="width:120px" disabled>
+        <button class="btn">Set</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">Chlorinator active time</div>
+      <div class="row">
+        <input type="range" min="0" max="45" step="1" value="10" disabled>
+        <span class="val">10</span>
+        <span class="unit">min</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <input type="number" min="0" max="45" step="1" value="10" style="width:120px" disabled>
+        <button class="btn">Set</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">Delay leakage alarm</div>
+      <div class="row">
+        <input type="range" min="0" max="60" step="1" value="30" disabled>
+        <span class="val">30</span>
+        <span class="unit">min</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <input type="number" min="0" max="60" step="1" value="30" style="width:120px" disabled>
+        <button class="btn">Set</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">Water flow timeout</div>
+      <div class="row">
+        <input type="range" min="0" max="300" step="0.1" value="6.5" disabled>
+        <span class="val">6.5</span>
+        <span class="unit">s</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <input type="number" min="0" max="300" step="0.1" value="6.5" style="width:120px" disabled>
+        <button class="btn">Set</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">Water hardness °D</div>
+      <div class="row">
+        <input type="range" min="0" max="35" step="0.5" value="16" disabled>
+        <span class="val">16.0</span>
+        <span class="unit">°D</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <input type="number" min="0" max="35" step="0.5" value="16" style="width:120px" disabled>
+        <button class="btn">Set</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Selects -->
+  <div class="section">
+    <h2>&#x1F527; Mode Settings</h2>
+
+    <div class="card">
+      <div class="label">Function mode</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select style="flex:1" disabled>
+          <option selected>Off</option>
+          <option>Chlorinator</option>
+        </select>
+        <button class="btn">Set</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">Regeneration mode</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select style="flex:1" disabled>
+          <option>Upflow - Post fill</option>
+          <option>Upflow - Pre fill</option>
+          <option selected>Downflow - Post fill</option>
+          <option>Downflow - Pre fill</option>
+        </select>
+        <button class="btn">Set</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Switches -->
+  <div class="section">
+    <h2>&#x1F50C; Controls</h2>
+
+    <div class="card">
+      <div class="toggle-wrap">
+        <span class="toggle-label">Chlorinator</span>
+        <label class="toggle">
+          <input type="checkbox">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- WiFi -->
+  <div class="section">
+    <h2>&#x1F4F6; WiFi Configuration</h2>
+
+    <div class="card">
+      <div class="label">Current Connection</div>
+      <div class="wifi-info">
+        <span class="lbl">SSID:</span><span class="val">MyHomeNetwork</span>
+        <span class="lbl">IP Address:</span><span class="val">192.168.1.50</span>
+        <span class="lbl">Gateway:</span><span class="val">192.168.1.1</span>
+        <span class="lbl">DNS:</span><span class="val">192.168.1.1</span>
+        <span class="lbl">Signal:</span><span class="val">-62 dBm</span>
+        <span class="lbl">MAC:</span><span class="val">A4:CF:12:AB:34:56</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">Change WiFi Network</div>
+      <div class="wifi-form">
+        <div class="form-row">
+          <label>SSID (Network Name)</label>
+          <input type="text" placeholder="Enter WiFi network name" disabled>
+        </div>
+        <div class="form-row">
+          <label>Password</label>
+          <div class="password-wrap">
+            <input type="password" placeholder="Enter WiFi password" disabled>
+            <span class="eye">&#x1F441;</span>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn">&#x1F4BE; Save &amp; Reconnect</button>
+          <button class="btn secondary">&#x21A9; Reset to Default</button>
+        </div>
+        <div style="font-size:.75em;color:var(--text-dim);margin-top:4px">
+          Device will restart and connect to the new network. If connection fails, it will fall back to AP mode (SSID: clack).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- System -->
+  <div class="section">
+    <h2>&#x1F6E0; System</h2>
+    <div class="card">
+      <div class="btn-row">
+        <button class="btn danger">&#x1F504; Restart Device</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="links">
+  <a href="preview-dashboard.html">Dashboard</a>
+  <a href="preview-json.html">Raw JSON</a>
+</div>
+</body>
+</html>
