@@ -1,7 +1,7 @@
-[README.md](https://github.com/user-attachments/files/27125295/README.md)
+[README.md](https://github.com/user-attachments/files/27125994/README.md)
 # 💧 Clack Reader V4 — Loxone Edition
 
-ESPHome firmware for the **Clack DV (WSPI) water softener** with TOF salt level sensor, water meter pulse counting, chlorinator relay control, and 3-channel power monitoring. This fork adds a **JSON API**, **HTML5 dashboard**, and **web configuration page** for integration with **Loxone Miniserver** (or any HTTP-polling system), replacing the need for Home Assistant.
+ESPHome firmware for the **Clack WS1 water softener** with TOF salt level sensor, water meter pulse counting, chlorinator relay control, and 3-channel power monitoring. This fork adds a **JSON API**, **HTML5 dashboard**, and **web configuration page** for integration with **Loxone Miniserver** (or any HTTP-polling system), replacing the need for Home Assistant.
 
 > Based on [fonske/clack-reader-v4](https://github.com/fonske/clack-reader-v4) — adapted for standalone Loxone use.
 
@@ -51,7 +51,7 @@ graph LR
 | **HTML5 Dashboard** (`/dashboard`) | 20-card dark-themed layout with salt level bar, auto-refreshes every 5 seconds |
 | **Configuration Page** (`/config`) | Web UI for all settings, WiFi management, and device restart |
 | **Salt Level Monitoring** | VL53L1X TOF sensor (up to 4m range) measures distance → calculates salt height & percentage |
-| **Water Meter** | Pulse counting at 28.60 pulses/liter for Clack DV flowmeter |
+| **Water Meter** | Pulse counting at 16.30 pulses/liter for Clack WS1 flowmeter |
 | **Capacity Tracking** | Liters, m³, percentage, and days remaining until next regeneration |
 | **Regeneration Cycle Tracking** | Detects and times each cycle phase (backwash, brine, rinse, fill, service) |
 | **Chlorinator Control** | GPIO relay with configurable timed auto-off delay (0–45 min) |
@@ -112,7 +112,7 @@ esphome/
     ├── .clack-labels-en.yaml           # English entity names (88 substitutions)
     ├── .clack-optional.yaml            # WiFi signal strength, uptime sensors
     ├── .tof2.yaml                      # VL53L1X TOF sensor (external component)
-    ├── .waterflow.yaml                 # Pulse meter water flow (GPIO7, 28.60 pulses/L)
+    ├── .waterflow.yaml                 # Pulse meter water flow (GPIO7, 16.30 pulses/L)
     └── board-esp32-atom-s3.yaml        # M5Stack Atom S3 Lite board, pins, LED, buttons
 ```
 
@@ -180,6 +180,28 @@ python -m esphome upload esphome/clack.yaml --device <IP_or_COM_port>
 | `http://<device-ip>/json` | JSON API — all sensor values as flat JSON |
 | `http://<device-ip>/dashboard` | HTML5 dashboard — visual monitoring with 20 cards |
 | `http://<device-ip>/config` | Configuration page — settings, WiFi management, restart |
+
+### 🖼️ Page Previews
+
+Below are screenshots of each page with sample data. You can also open the interactive HTML mockups in [`docs/`](docs/) to explore them in your browser.
+
+#### `/dashboard` — Sensor Dashboard
+
+20 color-coded cards showing salt, water, power, and system status at a glance.
+
+![Dashboard Preview](docs/preview-dashboard.png)
+
+#### `/config` — Configuration Page
+
+Sliders, dropdowns, toggle switches, WiFi management, and system controls.
+
+![Configuration Page Preview](docs/preview-config.png)
+
+#### `/json` — JSON API Response
+
+Flat JSON with all sensor values, binary states, configurable numbers, and selects.
+
+![JSON Endpoint Preview](docs/preview-json.png)
 
 ---
 
@@ -282,7 +304,7 @@ python -m esphome upload esphome/clack.yaml --device <IP_or_COM_port>
 
   "chlorinator": false,
 
-  "set_pulse_per_ltr": 28.60,
+  "set_pulse_per_ltr": 16.30,
   "min_salt_distance": 0,
   "min_salt_distance_unit": "cm",
   "max_salt_distance": 30,
@@ -403,7 +425,7 @@ python -m esphome upload esphome/clack.yaml --device <IP_or_COM_port>
 | Key | Type | Unit | Description |
 |-----|------|------|-------------|
 | `water_hardness_d` | number | °D | Water hardness setting (German degrees) |
-| `set_pulse_per_ltr` | number | — | Pulses per liter (28.60 for Clack DV, 16.30 for WS1) |
+| `set_pulse_per_ltr` | number | — | Pulses per liter (16.30 for Clack WS1, 28.60 for DV) |
 | `min_salt_distance` | number | cm | Sensor distance when salt tank is full |
 | `max_salt_distance` | number | cm | Sensor distance when salt tank is empty |
 | `fill_salt_distance` | number | cm | Salt height below which "fill salt = yes" |
@@ -484,6 +506,8 @@ sequenceDiagram
 
 Access at `http://<device-ip>/dashboard`
 
+![Dashboard](docs/preview-dashboard.png)
+
 The dashboard features:
 - **Dark theme** with card-based layout
 - **20 sensor cards** organized by category with color-coded borders:
@@ -502,6 +526,8 @@ The dashboard features:
 ## ⚙️ Configuration Page
 
 Access at `http://<device-ip>/config`
+
+![Configuration Page](docs/preview-config.png)
 
 The configuration page provides:
 
@@ -543,7 +569,7 @@ Toggle switches for chlorinator relay and other controllable entities.
 
 | Setting | Range | Default | Unit | Description |
 |---------|-------|---------|------|-------------|
-| Set pulse per ltr | 0–50 | 28.60 | — | Pulses per liter (28.60 for Clack DV, 16.30 for WS1) |
+| Set pulse per ltr | 0–50 | 16.30 | — | Pulses per liter (16.30 for Clack WS1, 28.60 for DV) |
 | Min salt distance | 0–10 | 0 | cm | Sensor distance when salt tank is full |
 | Max salt distance | 0–100 | 30 | cm | Sensor distance when salt tank is empty |
 | Fill salt distance | 0–10 | 1.5 | cm | Salt height below which "fill salt = yes" |
@@ -576,7 +602,7 @@ graph LR
 
 ## 🏗️ AQMOS BM-120 Recommended Settings
 
-The **AQMOS BM-120** is an ECOSOFT LESS cabinet softener with a Clack WS PI (disc) valve. These are recommended starting values — **measure min/max distance with a ruler on your actual installation**.
+The **AQMOS BM-120** is an ECOSOFT LESS cabinet softener with a Clack WS1 valve. These are recommended starting values — **measure min/max distance with a ruler on your actual installation**.
 
 | Setting | Recommended Value | Notes |
 |---------|-------------------|-------|
@@ -586,7 +612,7 @@ The **AQMOS BM-120** is an ECOSOFT LESS cabinet softener with a Clack WS PI (dis
 | **Capacity in liters** | **3700 L** | Default is good for BM-120 at ~16 °D water hardness. Adjust to match AQMOS programming. |
 | **Capacity in days** | **14** | Standard 2-week regeneration interval. Match to what AQMOS programmed in the Clack head. |
 | **Water hardness °D** | **16 °D** | Typical Belgian tap water. Check your local water provider for the exact value. |
-| **Pulse per liter** | **28.60** | Correct for Clack DV/WSPI flowmeter. Do not change. |
+| **Pulse per liter** | **16.30** | Correct for Clack WS1 flowmeter. Use 28.60 for Clack DV. |
 
 ### How to Calibrate Min/Max Distance
 
@@ -601,13 +627,15 @@ The **AQMOS BM-120** is an ECOSOFT LESS cabinet softener with a Clack WS PI (dis
 
 ## 🔌 Hardware Pin Mapping
 
+![Clack Reader V4 PCB](https://github.com/fonske/clack-reader-v4/raw/main/readme/pcb_transp.png)
+
 ### M5Stack Atom S3 Lite (ESP32-S3)
 
 | Component | GPIO Pin | Protocol | I2C Address | Description |
 |-----------|----------|----------|-------------|-------------|
 | VL53L1X TOF Sensor | SDA=6, SCL=5 | I2C | 0x29 | Salt level distance (up to 4m, short mode) |
 | INA3221 Power Meter | SDA=6, SCL=5 | I2C | 0x41 | 3-channel power monitoring |
-| Watermeter Pulse | GPIO 7 | Digital (pull-up) | — | Pulse counter (28.60 pulses/L) |
+| Watermeter Pulse | GPIO 7 | Digital (pull-up) | — | Pulse counter (16.30 pulses/L for WS1) |
 | Chlorinator Relay | GPIO 8 | Digital output | — | Relay for chlorinator control |
 | WS2812 RGB LED | GPIO 35 | RMT (NeoPixel) | — | 4× WS2812C-2020 status LEDs (GRB order) |
 | Physical Button | GPIO 41 | Input (pull-up) | — | Short press = LED toggle, long press = brightness |
@@ -679,7 +707,7 @@ Also uncomment the `api.connected` wait in the `on_boot` script and remove the `
 | Salt level reads 0% | Calibrate Min/Max salt distance sliders via `/config` or web UI |
 | TOF sensor shows NaN | Check I2C Grove cable connection (max 2m). Verify SDA=GPIO6, SCL=GPIO5 |
 | Chlorinator doesn't switch | Check GPIO 8 wiring. Verify Function Mode is set to "Chlorinator" via `/config` |
-| Water meter not counting | Verify pulse input on GPIO 7. Check pulse-per-liter value (28.60 for Clack DV) |
+| Water meter not counting | Verify pulse input on GPIO 7. Check pulse-per-liter value (16.30 for Clack WS1, 28.60 for DV) |
 | Dashboard shows "Offline" | ESP may be rebooting. Check serial logs: `esphome logs clack.yaml` |
 | Power readings are zero | Verify INA3221 at I2C address 0x41. Check 0.1Ω shunt resistors |
 | Leakage false alarm | Increase "Leakage alarm delay" slider (default 30 min) via `/config` |
