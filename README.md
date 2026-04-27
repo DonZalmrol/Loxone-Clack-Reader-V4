@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/27125994/README.md)
+[README.md](https://github.com/user-attachments/files/27126122/README.md)
 # 💧 Clack Reader V4 — Loxone Edition
 
 ESPHome firmware for the **Clack WS1 water softener** with TOF salt level sensor, water meter pulse counting, chlorinator relay control, and 3-channel power monitoring. This fork adds a **JSON API**, **HTML5 dashboard**, and **web configuration page** for integration with **Loxone Miniserver** (or any HTTP-polling system), replacing the need for Home Assistant.
@@ -183,25 +183,25 @@ python -m esphome upload esphome/clack.yaml --device <IP_or_COM_port>
 
 ### 🖼️ Page Previews
 
-Below are screenshots of each page with sample data. You can also open the interactive HTML mockups in [`docs/`](docs/) to explore them in your browser.
+Below are screenshots of each page with sample data. You can also open the interactive HTML mockups in [`images/`](images/) to explore them in your browser.
 
 #### `/dashboard` — Sensor Dashboard
 
 20 color-coded cards showing salt, water, power, and system status at a glance.
 
-![Dashboard Preview](docs/preview-dashboard.png)
+![Dashboard Preview](images/preview-dashboard.png)
 
 #### `/config` — Configuration Page
 
 Sliders, dropdowns, toggle switches, WiFi management, and system controls.
 
-![Configuration Page Preview](docs/preview-config.png)
+![Configuration Page Preview](images/preview-config.png)
 
 #### `/json` — JSON API Response
 
 Flat JSON with all sensor values, binary states, configurable numbers, and selects.
 
-![JSON Endpoint Preview](docs/preview-json.png)
+![JSON Endpoint Preview](images/preview-json.png)
 
 ---
 
@@ -506,7 +506,7 @@ sequenceDiagram
 
 Access at `http://<device-ip>/dashboard`
 
-![Dashboard](docs/preview-dashboard.png)
+![Dashboard](images/preview-dashboard.png)
 
 The dashboard features:
 - **Dark theme** with card-based layout
@@ -527,7 +527,7 @@ The dashboard features:
 
 Access at `http://<device-ip>/config`
 
-![Configuration Page](docs/preview-config.png)
+![Configuration Page](images/preview-config.png)
 
 The configuration page provides:
 
