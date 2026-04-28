@@ -1,9 +1,8 @@
-[README.md](https://github.com/user-attachments/files/27126122/README.md)
 # 💧 Clack Reader V4 — Loxone Edition
 
-ESPHome firmware for the **Clack WS1 water softener** with TOF salt level sensor, water meter pulse counting, chlorinator relay control, and 3-channel power monitoring. This fork adds a **JSON API**, **HTML5 dashboard**, and **web configuration page** for integration with **Loxone Miniserver** (or any HTTP-polling system), replacing the need for Home Assistant.
+ESPHome firmware for the **Aqmos CM-120 water softener** (Clack WS1 CI valve) with TOF salt level sensor, water meter pulse counting, chlorinator relay control, and 3-channel power monitoring. This fork adds a **JSON API**, **HTML5 dashboard**, and **web configuration page** for integration with **Loxone Miniserver** (or any HTTP-polling system), replacing the need for Home Assistant.
 
-> Based on [fonske/clack-reader-v4](https://github.com/fonske/clack-reader-v4) — adapted for standalone Loxone use.
+> Based on [fonske/clack-reader-v4](https://github.com/fonske/clack-reader-v4) — adapted for standalone Loxone use with Aqmos CM-120.
 
 ---
 
@@ -51,7 +50,7 @@ graph LR
 | **HTML5 Dashboard** (`/dashboard`) | 20-card dark-themed layout with salt level bar, auto-refreshes every 5 seconds |
 | **Configuration Page** (`/config`) | Web UI for all settings, WiFi management, and device restart |
 | **Salt Level Monitoring** | VL53L1X TOF sensor (up to 4m range) measures distance → calculates salt height & percentage |
-| **Water Meter** | Pulse counting at 16.30 pulses/liter for Clack WS1 flowmeter |
+| **Water Meter** | Pulse counting at 16.30 pulses/liter for Clack WS1 CI flowmeter (Aqmos CM-120) |
 | **Capacity Tracking** | Liters, m³, percentage, and days remaining until next regeneration |
 | **Regeneration Cycle Tracking** | Detects and times each cycle phase (backwash, brine, rinse, fill, service) |
 | **Chlorinator Control** | GPIO relay with configurable timed auto-off delay (0–45 min) |
@@ -176,7 +175,7 @@ python -m esphome upload esphome/clack.yaml --device <IP_or_COM_port>
 
 | URL | Description |
 |-----|-------------|
-| `http://<device-ip>/` | ESPHome built-in web UI (sliders, buttons, raw controls) |
+| `http://<device-ip>/` | Redirects to `/dashboard` |
 | `http://<device-ip>/json` | JSON API — all sensor values as flat JSON |
 | `http://<device-ip>/dashboard` | HTML5 dashboard — visual monitoring with 20 cards |
 | `http://<device-ip>/config` | Configuration page — settings, WiFi management, restart |
@@ -311,7 +310,7 @@ Flat JSON with all sensor values, binary states, configurable numbers, and selec
   "max_salt_distance_unit": "cm",
   "fill_salt_distance": 1.5,
   "fill_salt_distance_unit": "cm",
-  "capacity_in_liters": 3700,
+  "capacity_in_liters": 7500,
   "capacity_in_liters_unit": "L",
   "capacity_in_days": 14,
   "capacity_in_days_unit": "days",
@@ -429,7 +428,7 @@ Flat JSON with all sensor values, binary states, configurable numbers, and selec
 | `min_salt_distance` | number | cm | Sensor distance when salt tank is full |
 | `max_salt_distance` | number | cm | Sensor distance when salt tank is empty |
 | `fill_salt_distance` | number | cm | Salt height below which "fill salt = yes" |
-| `capacity_in_liters` | number | L | Water softener capacity per regeneration cycle |
+| `capacity_in_liters` | number | L | Water softener capacity per regeneration cycle (7500 L for CM-120 at 16°dH) |
 | `capacity_in_days` | number | days | Expected days between regenerations |
 | `resinclean_days` | number | days | Interval between resin cleaning |
 | `chlorinator_active_time` | number | min | Chlorinator auto-off timer |
@@ -569,11 +568,11 @@ Toggle switches for chlorinator relay and other controllable entities.
 
 | Setting | Range | Default | Unit | Description |
 |---------|-------|---------|------|-------------|
-| Set pulse per ltr | 0–50 | 16.30 | — | Pulses per liter (16.30 for Clack WS1, 28.60 for DV) |
+| Set pulse per ltr | 0–50 | 16.30 | — | Pulses per liter (16.30 for Clack WS1 CI / CM-120, 28.60 for DV) |
 | Min salt distance | 0–10 | 0 | cm | Sensor distance when salt tank is full |
 | Max salt distance | 0–100 | 30 | cm | Sensor distance when salt tank is empty |
 | Fill salt distance | 0–10 | 1.5 | cm | Salt height below which "fill salt = yes" |
-| Capacity in liters | 0–12000 | 3700 | L | Water softener capacity per regeneration cycle |
+| Capacity in liters | 0–15000 | 7500 | L | Water softener capacity per regeneration cycle (CM-120: 12,000 L at 10°dH) |
 | Capacity in days | 0–21 | 14 | days | Expected days between regenerations |
 | Resinclean days | 0–365 | 120 | days | Interval between resin cleaning |
 | Chlorinator active time | 0–45 | 10 | min | Chlorinator auto-off timer |
@@ -600,24 +599,24 @@ graph LR
 
 ---
 
-## 🏗️ AQMOS BM-120 Recommended Settings
+## 🏗️ AQMOS CM-120 Recommended Settings
 
-The **AQMOS BM-120** is an ECOSOFT LESS cabinet softener with a Clack WS1 valve. These are recommended starting values — **measure min/max distance with a ruler on your actual installation**.
+The **AQMOS CM-120** is a single-cabinet water softener with a **Clack WS 1 CI** valve, 12,000 L capacity at 10°dH, dimensions 50×32×114 cm, max 70 kg salt, 3.6 m³/h max flow. These are recommended starting values — **measure min/max distance with a ruler on your actual installation**.
 
 | Setting | Recommended Value | Notes |
 |---------|-------------------|-------|
 | **Min salt distance** | **2.0 cm** | Distance from sensor to salt surface when tank is FULL. Measure after filling. |
 | **Max salt distance** | **35.0 cm** | Distance from sensor when salt is EMPTY (down to water level). Measure with empty tank. |
 | **Fill salt distance** | **3.0 cm** | Salt height below which "Fill salt = yes" triggers. ~10% of usable range. |
-| **Capacity in liters** | **3700 L** | Default is good for BM-120 at ~16 °D water hardness. Adjust to match AQMOS programming. |
-| **Capacity in days** | **14** | Standard 2-week regeneration interval. Match to what AQMOS programmed in the Clack head. |
-| **Water hardness °D** | **16 °D** | Typical Belgian tap water. Check your local water provider for the exact value. |
-| **Pulse per liter** | **16.30** | Correct for Clack WS1 flowmeter. Use 28.60 for Clack DV. |
+| **Capacity in liters** | **7500 L** | CM-120 rated 12,000 L at 10°dH → ~7,500 L at 16°dH. Adjust to match your water hardness. |
+| **Capacity in days** | **14** | Standard 2-week regeneration interval. Match to what the Clack head is programmed for. |
+| **Water hardness °D** | **16 °D** | Typical tap water. Check your local water provider for the exact value. |
+| **Pulse per liter** | **16.30** | Correct for Clack WS1 CI flowmeter (CM-120). Use 28.60 for Clack DV. |
 
 ### How to Calibrate Min/Max Distance
 
 1. **Fill the salt tank completely** → read the TOF distance on `/json` or `/dashboard` → that's your **min** (typically 2–5 cm)
-2. **When salt is depleted** to water level → that reading is your **max** (typically 30–40 cm for BM-120 cabinet)
+2. **When salt is depleted** to water level → that reading is your **max** (typically 30–40 cm for CM-120 cabinet)
 3. Enter these values via the `/config` page or ESPHome web UI sliders
 4. The **fill salt distance** determines when the "Fill salt" alert triggers — set it a few cm above empty
 
