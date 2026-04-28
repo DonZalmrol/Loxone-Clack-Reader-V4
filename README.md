@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/27166325/README.md)
+[README.md](https://github.com/user-attachments/files/27166455/README.md)
 # 💧 Clack Reader V4 — Loxone Edition
 
 ESPHome firmware for the **Aqmos CM-120 water softener** (Clack WS1 CI valve) with TOF salt level sensor, water meter pulse counting, chlorinator relay control, and 3-channel power monitoring. This fork adds a **JSON API**, **HTML5 dashboard**, and **web configuration page** for integration with **Loxone Miniserver** (or any HTTP-polling system), replacing the need for Home Assistant.
