@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/27166455/README.md)
+[README.md](https://github.com/user-attachments/files/27166718/README.md)
 # 💧 Clack Reader V4 — Loxone Edition
 
 ESPHome firmware for the **Aqmos CM-120 water softener** (Clack WS1 CI valve) with TOF salt level sensor, water meter pulse counting, chlorinator relay control, and 3-channel power monitoring. This fork adds a **JSON API**, **HTML5 dashboard**, and **web configuration page** for integration with **Loxone Miniserver** (or any HTTP-polling system), replacing the need for Home Assistant.
@@ -63,6 +63,8 @@ graph LR
 | **WiFi Management** | Change SSID/password or reset to defaults via `/config` page |
 | **Multi-language** | English labels included (88 substitution variables) |
 | **OTA Updates** | Over-the-air firmware updates via ESPHome |
+| **API Token Authentication** | Optional Bearer token protects all `/api/*` endpoints (set in `secrets.yaml`) |
+| **I2C Diagnostics** | `/api/diag` endpoint with I2C bus scan, sensor states, and free heap |
 | **Physical Button** | Toggle status LED on/off (short press) or adjust brightness (long press) |
 
 ---
@@ -135,6 +137,16 @@ Edit `esphome/secrets.yaml`:
 wifi_ssid: "YourWiFiSSID"
 wifi_password: "YourWiFiPassword"
 ```
+
+### 2b. (Optional) Configure API Token
+
+To protect `/api/*` endpoints with token authentication, set `api_token` in `secrets.yaml`:
+
+```yaml
+api_token: "my-secret-token-here"
+```
+
+When set, all `/api/*` endpoints require authentication via query parameter or header (see [API Authentication](#-api-authentication)). Leave empty (`""`) to disable authentication.
 
 ### 3. (Optional) Configure Static IP
 
@@ -209,13 +221,48 @@ Flat JSON with all sensor values, binary states, configurable numbers, and selec
 
 ### Endpoints
 
-| Endpoint | Method | Content-Type | Description |
-|----------|--------|--------------|-------------|
-| `/json` | GET | `application/json` | All entity states as flat JSON with units |
-| `/dashboard` | GET | `text/html` | HTML5 dashboard page |
-| `/config` | GET | `text/html` | Configuration page |
-| `/api/entities` | GET | `application/json` | Metadata for numbers, selects, switches |
-| `/api/set` | POST | — | Set entity values (domain, id, value params) |
+| Endpoint | Method | Content-Type | Auth | Description |
+|----------|--------|--------------|------|-------------|
+| `/json` | GET | `application/json` | No | All entity states as flat JSON with units |
+| `/dashboard` | GET | `text/html` | No | HTML5 dashboard page |
+| `/config` | GET | `text/html` | No | Configuration page |
+| `/api/entities` | GET | `application/json` | Yes | Metadata for numbers, selects, switches |
+| `/api/set` | POST | `text/plain` | Yes | Set entity values (domain, id, value params) |
+| `/api/wifi` | GET | `application/json` | Yes | Current WiFi info (SSID, IP, gateway, DNS, RSSI, MAC) |
+| `/api/wifi` | POST | `text/plain` | Yes | Change WiFi credentials (`ssid` + `password`) or reset (`reset=1`) |
+| `/api/restart` | POST | `text/plain` | Yes | Restart the device |
+| `/api/diag` | GET | `application/json` | Yes | I2C bus scan, sensor diagnostics, free heap |
+
+> **Auth column:** When `api_token` is set in `secrets.yaml`, endpoints marked "Yes" require authentication. Endpoints marked "No" are always open. See [API Authentication](#-api-authentication) below.
+
+### 🔐 API Authentication
+
+When `api_token` is set to a non-empty value in `secrets.yaml`, all `/api/*` endpoints require a valid token. The `/json`, `/dashboard`, and `/config` endpoints remain open (no authentication required).
+
+**Two ways to authenticate:**
+
+1. **Query parameter:** append `?token=YOUR_TOKEN` to the URL
+   ```
+   GET http://<device-ip>/api/entities?token=my-secret-token
+   POST http://<device-ip>/api/set?token=my-secret-token&domain=number&id=water_hardness_d&value=18
+   ```
+
+2. **Authorization header:** send a `Bearer` token header
+   ```
+   GET http://<device-ip>/api/entities
+   Authorization: Bearer my-secret-token
+   ```
+
+**Unauthorized requests** receive a `401 Unauthorized` response:
+```
+HTTP/1.1 401
+Unauthorized: invalid or missing token
+```
+
+**To disable authentication:** leave `api_token` empty in `secrets.yaml`:
+```yaml
+api_token: ""
+```
 
 ### Example `/json` Response
 
@@ -471,6 +518,8 @@ sequenceDiagram
 
 1. **Add a Virtual HTTP Input** in Loxone Config
 2. Set the URL to: `http://<clack-ip>/json`
+   - The `/json` endpoint does **not** require authentication, even when `api_token` is set
+   - If you need to call `/api/*` endpoints from Loxone, append `?token=YOUR_TOKEN` to the URL
 3. Set the polling interval (e.g. `10` seconds)
 4. **Add Virtual HTTP Input Commands** for each value you want to use:
 
@@ -564,6 +613,7 @@ Toggle switches for chlorinator relay and other controllable entities.
 | `salt_level_update_interval` | `30s` | TOF sensor reading interval |
 | `watermeter_update_interval` | `60s` | Water meter display refresh |
 | `clack_height_update_interval` | `60s` | Salt height recalculation |
+| `api_token` | `!secret api_token` | API authentication token (empty = no auth) |
 
 ### Configurable Sliders (via Web UI or `/config`)
 
