@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Clack Reader — Dashboard Preview</title>
+<title>Aqmos CM-120 — Dashboard Preview</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -11,6 +11,7 @@
   --text:#e2e8f0;--text-dim:#94a3b8;--accent:#38bdf8;
   --green:#4ade80;--yellow:#facc15;--red:#f87171;--blue:#60a5fa;
   --radius:12px;--shadow:0 4px 24px rgba(0,0,0,.3);
+  --input-border:#475569;
 }
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:var(--bg);color:var(--text);min-height:100vh;padding:16px}
@@ -24,6 +25,67 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .status-bar .dot{width:8px;height:8px;border-radius:50%;display:inline-block;
   margin-right:4px;vertical-align:middle}
 .dot.online{background:var(--green);box-shadow:0 0 6px var(--green)}
+.refresh-info{font-size:.7em;color:var(--text-dim)}
+
+/* Hero section */
+.hero{display:flex;gap:16px;max-width:1200px;margin:0 auto 20px;flex-wrap:wrap;justify-content:center}
+.hero-card{background:var(--card);border-radius:var(--radius);padding:20px;
+  box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center}
+.hero-title{font-size:.75em;text-transform:uppercase;letter-spacing:1px;
+  color:var(--text-dim);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+
+/* Tank */
+.tank-card{min-width:180px}
+.tank-wrap{position:relative;width:100px;margin:0 auto}
+.tank-cap{width:60px;height:10px;margin:0 auto;background:var(--card-hover);
+  border:2px solid var(--accent);border-bottom:none;border-radius:6px 6px 0 0}
+.tank-body{position:relative;width:100px;height:170px;border:2px solid var(--accent);
+  border-radius:0 0 12px 12px;overflow:hidden;background:#0c1829}
+.tank-fill{position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(to top,#1e3a8a,#2563eb,#60a5fa)}
+.tank-wave{position:absolute;top:-6px;left:-5%;width:110%;height:12px;opacity:.6;
+  background:repeating-radial-gradient(ellipse at 50% 100%,rgba(255,255,255,.3) 0,rgba(255,255,255,0) 70%);
+  background-size:24px 12px}
+.tank-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:1.8em;font-weight:700;text-shadow:0 2px 8px rgba(0,0,0,.6);z-index:2}
+.tank-sub{text-align:center;margin-top:8px;font-size:.85em;color:var(--text-dim)}
+
+/* Gauges */
+.gauges-card{min-width:280px}
+.gauges-row{display:flex;gap:20px;justify-content:center}
+.gauge{text-align:center}
+.gauge svg{width:110px;height:110px}
+.gauge-track{fill:none;stroke:#334155;stroke-width:8}
+.gauge-fill{fill:none;stroke-width:8;stroke-linecap:round}
+.gauge-pct{fill:var(--text);font-size:22px;font-weight:700;dominant-baseline:central;text-anchor:middle}
+.gauge-label{font-size:.7em;color:var(--text-dim);margin-top:6px}
+.gauge-sub{font-size:.75em;color:var(--text-dim);margin-top:2px}
+
+/* Flow rate */
+.flow-card{min-width:160px;justify-content:center}
+.flow-val{font-size:2.2em;font-weight:700;line-height:1.1}
+.flow-unit{font-size:.4em;font-weight:400;color:var(--text-dim);margin-left:4px}
+.flow-status{margin-top:8px;font-size:.8em;display:flex;align-items:center;gap:6px}
+.flow-dot{width:8px;height:8px;border-radius:50%;background:var(--text-dim)}
+
+/* Cycle section */
+.cycle-section{max-width:1200px;margin:0 auto 20px;background:var(--card);
+  border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.cycle-header{display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.cycle-header .ch-title{font-size:.75em;text-transform:uppercase;letter-spacing:1px;
+  color:var(--text-dim);display:flex;align-items:center;gap:6px}
+.cycle-mode{font-size:.75em;color:var(--accent);background:rgba(56,189,248,.1);
+  padding:3px 10px;border-radius:12px}
+.cycle-idle{text-align:center;padding:12px 0;color:var(--text-dim);font-size:.9em}
+.cycle-idle .idle-icon{font-size:1.5em;margin-bottom:4px}
+.cycle-last{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px;font-size:.8em}
+.cycle-last-item{background:var(--card-hover);padding:5px 10px;border-radius:8px;
+  display:flex;gap:6px;align-items:center}
+.cycle-last-item .lbl{color:var(--text-dim)}
+.cycle-last-item .val{font-weight:600}
+
+/* Cards grid */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
   gap:16px;max-width:1200px;margin:0 auto}
 .card{background:var(--card);border-radius:var(--radius);padding:20px;
@@ -44,141 +106,180 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .links{text-align:center;margin-top:24px;padding:12px 0;font-size:.8em}
 .links a{color:var(--accent);text-decoration:none;margin:0 12px}
 .links a:hover{text-decoration:underline}
+
 @media(max-width:600px){
   .card .value{font-size:1.5em}
   .grid{grid-template-columns:1fr}
+  .hero{flex-direction:column;align-items:stretch}
+  .hero-card{min-width:auto}
+  .gauges-row{flex-wrap:wrap}
+  .flow-val{font-size:1.6em}
 }
 </style>
 </head>
 <body>
-<div class="banner">&#x1F4F7; STATIC PREVIEW — This is a dummy mockup of the /dashboard page with sample data</div>
+<div class="banner">&#x1F4CB; Static preview with sample data &mdash; on the device this page auto-refreshes from /json</div>
 
 <div class="header">
   <h1>&#x1F4A7; Clack Reader</h1>
-  <div class="sub">Water Softener Dashboard</div>
+  <div class="sub">Aqmos CM-120 &mdash; Water Softener Dashboard</div>
 </div>
 <div class="status-bar">
   <span><span class="dot online"></span> Online</span>
-  <span>2026-04-27 14:30:00</span>
-  <span>Uptime: 1d 0h 0m</span>
+  <span>2026-04-28 14:30:00</span>
+  <span>Uptime: 3d 12h 45m</span>
+  <span class="refresh-info">Updated 2s ago</span>
 </div>
 
+<!-- Hero: Tank + Gauges + Flow -->
+<div class="hero">
+  <div class="hero-card tank-card">
+    <div class="hero-title">&#x1F9C2; Salt Level</div>
+    <div class="tank-wrap">
+      <div class="tank-cap"></div>
+      <div class="tank-body">
+        <div class="tank-fill" style="height:72%">
+          <div class="tank-wave"></div>
+        </div>
+        <div class="tank-pct">72%</div>
+      </div>
+    </div>
+    <div class="tank-sub">22.5 cm</div>
+  </div>
+
+  <div class="hero-card gauges-card">
+    <div class="hero-title">&#x1F4A7; Capacity Remaining</div>
+    <div class="gauges-row">
+      <div class="gauge">
+        <svg viewBox="0 0 120 120">
+          <circle class="gauge-track" cx="60" cy="60" r="50"/>
+          <circle class="gauge-fill" cx="60" cy="60" r="50"
+            stroke-dasharray="314.16" stroke-dashoffset="113.1" stroke="var(--green)"
+            transform="rotate(-90 60 60)"/>
+          <text class="gauge-pct" x="60" y="60">64%</text>
+        </svg>
+        <div class="gauge-label">Water (Liters)</div>
+        <div class="gauge-sub">4800 L left</div>
+      </div>
+      <div class="gauge">
+        <svg viewBox="0 0 120 120">
+          <circle class="gauge-track" cx="60" cy="60" r="50"/>
+          <circle class="gauge-fill" cx="60" cy="60" r="50"
+            stroke-dasharray="314.16" stroke-dashoffset="134.9" stroke="var(--green)"
+            transform="rotate(-90 60 60)"/>
+          <text class="gauge-pct" x="60" y="60">57%</text>
+        </svg>
+        <div class="gauge-label">Time</div>
+        <div class="gauge-sub">8d 2h to regen</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-card flow-card">
+    <div class="hero-title">&#x1F30A; Flow Rate</div>
+    <div class="flow-val">0.00<span class="flow-unit">L/min</span></div>
+    <div class="flow-status">
+      <span class="flow-dot"></span>
+      <span style="color:var(--text-dim)">No flow</span>
+    </div>
+  </div>
+</div>
+
+<!-- Cycle Progress -->
+<div class="cycle-section">
+  <div class="cycle-header">
+    <div class="ch-title">&#x1F504; Cleaning Cycle</div>
+    <div class="cycle-mode">Downflow - Post fill</div>
+  </div>
+  <div class="cycle-idle">
+    <div class="idle-icon">&#x2705;</div>Idle &mdash; No active cycle
+  </div>
+  <div style="text-align:center;font-size:.7em;color:var(--text-dim);margin-top:4px">Last cycle step times:</div>
+  <div class="cycle-last">
+    <div class="cycle-last-item"><span class="lbl">Backwash</span><span class="val">0h 10m 0s</span></div>
+    <div class="cycle-last-item"><span class="lbl">Brine</span><span class="val">0h 45m 10s</span></div>
+    <div class="cycle-last-item"><span class="lbl">Rinse</span><span class="val">0h 5m 0s</span></div>
+    <div class="cycle-last-item"><span class="lbl">Fill</span><span class="val">0h 8m 30s</span></div>
+    <div class="cycle-last-item"><span class="lbl">Total</span><span class="val">1h 8m 40s</span></div>
+  </div>
+</div>
+
+<!-- Info Cards -->
 <div class="grid">
-  <!-- Salt cards -->
-  <div class="card salt">
-    <div class="title"><span class="icon">🧂</span> Salt Level</div>
+  <div class="card salt"><div class="title"><span class="icon">&#x1F9C2;</span> Salt Level</div>
     <div class="value">72<span class="unit">%</span></div>
-    <div class="salt-bar"><div class="fill" style="width:72%;background:var(--green)"></div></div>
-  </div>
+    <div class="salt-bar"><div class="fill" style="width:72%;background:var(--green)"></div></div></div>
+  <div class="card salt"><div class="title"><span class="icon">&#x1F4CF;</span> Salt Height</div>
+    <div class="value">22.5<span class="unit">cm</span></div></div>
+  <div class="card salt"><div class="title"><span class="icon">&#x1F4E1;</span> Sensor Distance</div>
+    <div class="value">15.3<span class="unit">cm</span></div></div>
+  <div class="card salt"><div class="title"><span class="icon">&#x1F9C2;</span> Last Salt Fill</div>
+    <div class="value" style="font-size:1.3em">Thu 10 Apr 09:15</div></div>
+  <div class="card alert"><div class="title"><span class="icon">&#x26A0;</span> Fill Salt?</div>
+    <div class="value" style="color:var(--text-dim)">no</div></div>
 
-  <div class="card salt">
-    <div class="title"><span class="icon">📏</span> Salt Height</div>
-    <div class="value">22.5<span class="unit">cm</span></div>
-  </div>
+  <div class="card water"><div class="title"><span class="icon">&#x1F30A;</span> Flow Rate</div>
+    <div class="value">0.00<span class="unit">L/min</span></div></div>
+  <div class="card water"><div class="title"><span class="icon">&#x1F6B0;</span> Water Meter</div>
+    <div class="value">2700.3<span class="unit">L</span></div></div>
+  <div class="card water"><div class="title"><span class="icon">&#x1F4A7;</span> Capacity Left</div>
+    <div class="value">4.80<span class="unit">m&sup3;</span></div></div>
+  <div class="card water"><div class="title"><span class="icon">&#x1F4A7;</span> Liters Left</div>
+    <div class="value">4800<span class="unit">L</span></div></div>
+  <div class="card water"><div class="title"><span class="icon">&#x1F4CA;</span> Capacity % (Liters)</div>
+    <div class="value">64.0<span class="unit">%</span></div></div>
+  <div class="card water"><div class="title"><span class="icon">&#x1F4CA;</span> Capacity % (Time)</div>
+    <div class="value">57.1<span class="unit">%</span></div></div>
 
-  <div class="card salt">
-    <div class="title"><span class="icon">📡</span> Sensor Distance</div>
-    <div class="value">15.3<span class="unit">cm</span></div>
-  </div>
+  <div class="card water"><div class="title"><span class="icon">&#x1F504;</span> Last Regeneration</div>
+    <div class="value" style="font-size:1.3em">Mon 14 Apr 10:30</div></div>
+  <div class="card water"><div class="title"><span class="icon">&#x1F504;</span> Cycle Step</div>
+    <div class="value">Idle</div></div>
+  <div class="card water"><div class="title"><span class="icon">&#x23F0;</span> Time to Regen</div>
+    <div class="value" style="font-size:1.3em">8d 2h</div></div>
+  <div class="card water"><div class="title"><span class="icon">&#x1F4C8;</span> Capacity Used (last)</div>
+    <div class="value">6850.0<span class="unit">L</span></div></div>
+  <div class="card water"><div class="title"><span class="icon">&#x23F3;</span> Operation Time (last)</div>
+    <div class="value" style="font-size:1.3em">1d 2h</div></div>
+  <div class="card water"><div class="title"><span class="icon">&#x1F9EA;</span> Time to Resinclean</div>
+    <div class="value" style="font-size:1.3em">98d 4h</div></div>
+  <div class="card water"><div class="title"><span class="icon">&#x1F9EA;</span> Last Resinclean</div>
+    <div class="value" style="font-size:1.3em">Sat 01 Mar 08:00</div></div>
 
-  <div class="card alert">
-    <div class="title"><span class="icon">⚠</span> Fill Salt?</div>
-    <div class="value">no</div>
-  </div>
+  <div class="card water"><div class="title"><span class="icon">&#x1F4A7;</span> Water Hardness &deg;D</div>
+    <div class="value">16.0<span class="unit">&deg;D</span></div></div>
+  <div class="card water"><div class="title"><span class="icon">&#x1F4A7;</span> Water Hardness &deg;F</div>
+    <div class="value">28.6<span class="unit">&deg;F</span></div></div>
+  <div class="card water"><div class="title"><span class="icon">&#x1F3F7;</span> Hardness Class</div>
+    <div class="value">Medium hard</div></div>
 
-  <!-- Water cards -->
-  <div class="card water">
-    <div class="title"><span class="icon">🚰</span> Water Meter</div>
-    <div class="value">1250.5<span class="unit">L</span></div>
-  </div>
+  <div class="card power"><div class="title"><span class="icon">&#x26A1;</span> Power Clack</div>
+    <div class="value">1.44<span class="unit">W</span></div></div>
+  <div class="card power"><div class="title"><span class="icon">&#x26A1;</span> Power ESP</div>
+    <div class="value">0.85<span class="unit">W</span></div></div>
+  <div class="card power"><div class="title"><span class="icon">&#x26A1;</span> Power Chlorinator</div>
+    <div class="value">0.00<span class="unit">W</span></div></div>
+  <div class="card power"><div class="title"><span class="icon">&#x1F50B;</span> Voltage</div>
+    <div class="value">12.0<span class="unit">V</span></div></div>
+  <div class="card power"><div class="title"><span class="icon">&#x1F50C;</span> Chlorinator</div>
+    <div class="value" style="color:var(--text-dim)">OFF</div></div>
 
-  <div class="card water">
-    <div class="title"><span class="icon">💧</span> Capacity Left</div>
-    <div class="value">1.95<span class="unit">m³</span></div>
-  </div>
-
-  <div class="card water">
-    <div class="title"><span class="icon">💧</span> Liters Left</div>
-    <div class="value">1950<span class="unit">L</span></div>
-  </div>
-
-  <div class="card water">
-    <div class="title"><span class="icon">🔄</span> Last Regeneration</div>
-    <div class="value" style="font-size:1.2em">Mon 14 Apr 10:30</div>
-  </div>
-
-  <div class="card water">
-    <div class="title"><span class="icon">🔄</span> Cycle Step</div>
-    <div class="value">Idle</div>
-  </div>
-
-  <div class="card water">
-    <div class="title"><span class="icon">⏰</span> Time to Regen</div>
-    <div class="value" style="font-size:1.4em">12d 6h</div>
-  </div>
-
-  <!-- Water hardness -->
-  <div class="card water">
-    <div class="title"><span class="icon">💧</span> Water Hardness °D</div>
-    <div class="value">16.0<span class="unit">°D</span></div>
-  </div>
-
-  <div class="card water">
-    <div class="title"><span class="icon">💧</span> Water Hardness °F</div>
-    <div class="value">28.6<span class="unit">°F</span></div>
-  </div>
-
-  <div class="card water">
-    <div class="title"><span class="icon">🏷</span> Hardness Class</div>
-    <div class="value" style="font-size:1.3em">Medium hard</div>
-  </div>
-
-  <!-- Power cards -->
-  <div class="card power">
-    <div class="title"><span class="icon">⚡</span> Power Clack</div>
-    <div class="value">1.44<span class="unit">W</span></div>
-  </div>
-
-  <div class="card power">
-    <div class="title"><span class="icon">🔋</span> Voltage</div>
-    <div class="value">12.0<span class="unit">V</span></div>
-  </div>
-
-  <div class="card power">
-    <div class="title"><span class="icon">⚡</span> Power ESP</div>
-    <div class="value">0.85<span class="unit">W</span></div>
-  </div>
-
-  <div class="card power">
-    <div class="title"><span class="icon">🔌</span> Chlorinator</div>
-    <div class="value" style="color:var(--text-dim)">OFF</div>
-  </div>
-
-  <!-- System cards -->
-  <div class="card system">
-    <div class="title"><span class="icon">📶</span> WiFi Signal</div>
-    <div class="value">78<span class="unit">%</span></div>
-  </div>
-
-  <div class="card system">
-    <div class="title"><span class="icon">ℹ</span> ESPHome Version</div>
-    <div class="value" style="font-size:1.3em">2026.4.2</div>
-  </div>
-
-  <div class="card system">
-    <div class="title"><span class="icon">⏱</span> Uptime</div>
-    <div class="value">1.0<span class="unit">days</span></div>
-  </div>
-
-  <div class="card system">
-    <div class="title"><span class="icon">⚙</span> Function Mode</div>
-    <div class="value">Off</div>
-  </div>
+  <div class="card system"><div class="title"><span class="icon">&#x1F321;</span> ESP Temperature</div>
+    <div class="value">42.5<span class="unit">&deg;C</span></div></div>
+  <div class="card system"><div class="title"><span class="icon">&#x1F4F6;</span> WiFi Signal</div>
+    <div class="value">78<span class="unit">%</span></div></div>
+  <div class="card system"><div class="title"><span class="icon">&#x2139;</span> ESPHome Version</div>
+    <div class="value" style="font-size:1.3em">2026.4.2</div></div>
+  <div class="card system"><div class="title"><span class="icon">&#x23F1;</span> Uptime</div>
+    <div class="value">3.5<span class="unit">days</span></div></div>
+  <div class="card system"><div class="title"><span class="icon">&#x2699;</span> Function Mode</div>
+    <div class="value">Off</div></div>
 </div>
 
 <div class="links">
-  <a href="preview-config.html">Configuration</a>
-  <a href="preview-json.html">Raw JSON</a>
+  <a href="#">ESPHome Web UI</a>
+  <a href="#">Raw JSON</a>
+  <a href="#">Configuration</a>
 </div>
 </body>
 </html>
