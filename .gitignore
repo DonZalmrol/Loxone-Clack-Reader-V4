@@ -1,1 +1,27 @@
+# Gitignore settings for ESPHome
+
+# Build artifacts and cache
+/.esphome/
+
+# WiFi credentials and passwords
+secrets.yaml
 esphome/secrets.yaml
+
+# Compiled firmware binaries
+*.bin
+*.elf
+*.map
+
+# Python / ESPHome cache
+__pycache__/
+*.pyc
+
+# OS generated files
+Thumbs.db
+.DS_Store
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
