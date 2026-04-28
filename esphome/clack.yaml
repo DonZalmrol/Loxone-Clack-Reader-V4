@@ -2,12 +2,14 @@ substitutions:
   # General substitutions:
   name: clack
   friendly_name: Clack
-  device_description: "Esphome component for Clack DV (WSPI) softener with TOF sensor saltlevel detection"
+  device_description: "Esphome component for Aqmos CM-120 (Clack WS1 CI) softener with TOF sensor saltlevel detection"
   timezone: "Europe/Amsterdam"
   # Interval substitutions (shortened for Loxone polling):
   salt_level_update_interval: 30s
   watermeter_update_interval: 60s       # was 600s - faster updates for Loxone
   clack_height_update_interval: 60s     # was 600s
+  # API authentication token (empty = no auth). Set in secrets.yaml.
+  api_token: !secret api_token
 
 ### ESP32-Atom-s3 is a M5STACK Atom s3 lite
 ### tof2 is a VL53L1X M5stack (ToF4M). Distance measure up to 4 mtr. I2C grove cable max 2 mtr length

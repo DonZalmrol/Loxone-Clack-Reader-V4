@@ -1,0 +1,91 @@
+INFO ESPHome 2026.4.2
+INFO Reading configuration clack.yaml...
+INFO Updating https://github.com/mrtoy-me/esphome-vl53l1x.git@main
+WARNING GPIO35 is used by the PSRAM interface on ESP32-S3R8 / ESP32-S3R8V and should be avoided on these models
+INFO Generating C++ source...
+INFO Setting CONFIG_LWIP_MAX_SOCKETS to 13 (TCP=8 [captive_portal=3, web_server=5], UDP=3 [captive_portal=1, mdns=2], TCP_LISTEN=2 [ota=1, web_server_base=1])
+INFO Compiling app... Build path: C:\Users\lagre\Downloads\Clack-V4\esphome\.esphome\build\clack
+Processing [36m[1mclack[0m (board: esp32-s3-devkitc-1; framework: espidf; platform: https://github.com/pioarduino/platform-espressif32/releases/download/55.03.38-1/platform-espressif32.zip)
+
+[1m--------------------------------------------------------------------------------[0m
+
+[0mHARDWARE: ESP32S3 240MHz, 320KB RAM, 8MB Flash
+
+[0m - contrib-piohome @ 3.4.4 
+
+[0m - framework-espidf @ 3.50504.0 (5.5.4) 
+
+[0m - tool-cmake @ 4.0.3 
+
+[0m - tool-esp-rom-elfs @ 2024.10.11 
+
+[0m - tool-esptoolpy @ 5.2.0 
+
+[0m - tool-ninja @ 1.13.1 
+
+[0m - tool-scons @ 4.40801.0 (4.8.1) 
+
+[0m - tool-xtensa-esp-elf-gdb @ 16.3.0+20250913 
+
+[0m - toolchain-xtensa-esp-elf @ 14.2.0+20260121
+
+Using Python 3.14.4 environment at: C:\Users\lagre\.platformio\penv\.espidf-5.5.4
+
+[0mReading CMake configuration...
+
+[0mNo dependencies
+
+[0mCompiling .pioenvs\clack\src\main.cpp.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\raw.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\stats.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\sys.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\tcp.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\tcp_in.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\tcp_out.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\timeouts.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\udp.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\ipv4\autoip.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\ipv4\dhcp.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\ipv4\etharp.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\ipv4\icmp.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\ipv4\igmp.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\ipv4\ip4.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\ipv4\ip4_napt.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\ipv4\ip4_addr.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\ipv4\ip4_frag.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\ipv6\dhcp6.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\ipv6\ethip6.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\ipv6\icmp6.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\ipv6\inet6.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\ipv6\ip6.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\ipv6\ip6_addr.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\ipv6\ip6_frag.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\ipv6\mld6.c.o
+
+[0mCompiling .pioenvs\clack\lwip\lwip\src\core\ipv6\nd6.c.o
+

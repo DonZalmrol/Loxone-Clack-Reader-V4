@@ -1,6 +1,6 @@
 #pragma once
 
-// Configuration page for Clack Reader V3
+// Configuration page for Clack Reader V4
 // Served at /config - allows setting all entity values and WiFi credentials
 
 static const char CONFIG_HTML[] PROGMEM = R"rawhtml(
@@ -9,7 +9,7 @@ static const char CONFIG_HTML[] PROGMEM = R"rawhtml(
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Clack V3 - Configuration</title>
+<title>Clack V4 - Configuration</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -86,7 +86,7 @@ select{background:var(--input-bg);border:1px solid var(--input-border);border-ra
 <body>
 <div class="header">
   <h1>&#x2699; Configuration</h1>
-  <div class="sub">Clack Reader V3 Settings</div>
+  <div class="sub">Clack Reader V4 Settings</div>
 </div>
 <div class="container">
   <div class="section" id="numbers-section">
@@ -252,7 +252,8 @@ async function saveWifi(){
   if(!ssid){toast('Please enter an SSID',true);return}
   if(!confirm('Save WiFi credentials and restart?\n\nSSID: '+ssid+'\n\nThe device will restart and try to connect to the new network.'))return;
   try{
-    const r=await fetch('/api/wifi?ssid='+encodeURIComponent(ssid)+'&password='+encodeURIComponent(pass),{method:'POST'});
+    const r=await fetch('/api/wifi',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ssid:ssid,password:pass})});
     if(r.ok){toast('WiFi saved! Restarting...');
       setTimeout(()=>{document.getElementById('wifi-ssid').textContent='Restarting...'},1000);
     }else toast('Failed: '+await r.text(),true);
@@ -262,7 +263,8 @@ async function saveWifi(){
 async function resetWifi(){
   if(!confirm('Reset WiFi to firmware defaults and restart?'))return;
   try{
-    const r=await fetch('/api/wifi?reset=1',{method:'POST'});
+    const r=await fetch('/api/wifi',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({reset:true})});
     if(r.ok)toast('WiFi reset! Restarting...');
     else toast('Failed: '+await r.text(),true);
   }catch(e){toast('Error: '+e.message,true)}

@@ -11,21 +11,75 @@
 #include <esp_wifi.h>
 #include <esp_system.h>
 
+// --- API authentication ---
+// Token is injected from the ESPHome substitution ${api_token}.
+// When empty, authentication is disabled (all endpoints are open).
+static const char *API_TOKEN = "${api_token}";
+
+static bool api_auth_enabled() {
+  return API_TOKEN[0] != '\0';
+}
+
+// Check token from query param ?token=X or header "Authorization: Bearer X"
+// Returns true if auth is disabled (empty token) or if the token matches.
+static bool check_api_auth(AsyncWebServerRequest *request) {
+  if (!api_auth_enabled()) return true;
+
+  // Check query parameter
+  if (request->hasParam("token")) {
+    if (request->getParam("token")->value() == API_TOKEN) return true;
+  }
+
+  // Check Authorization header
+  if (request->hasHeader("Authorization")) {
+    auto auth = request->get_header("Authorization");
+    if (auth.has_value() && auth->size() > 7 && auth->substr(0, 7) == "Bearer ") {
+      if (auth->substr(7) == API_TOKEN) return true;
+    }
+  }
+
+  return false;
+}
+
+static void send_unauthorized(AsyncWebServerRequest *request) {
+  request->send(401, "text/plain", "Unauthorized: invalid or missing token");
+}
+
 static std::string json_escape(const std::string &s) {
   std::string out;
   out.reserve(s.length() + 4);
-  for (char c : s) {
+  for (unsigned char c : s) {
     switch (c) {
       case '"':  out += "\\\""; break;
       case '\\': out += "\\\\"; break;
       case '\n': out += "\\n"; break;
       case '\r': out += "\\r"; break;
       case '\t': out += "\\t"; break;
-      default:   out += c;
+      case '\b': out += "\\b"; break;
+      case '\f': out += "\\f"; break;
+      default:
+        if (c < 0x20) {
+          char buf[8];
+          snprintf(buf, sizeof(buf), "\\u%04X", c);
+          out += buf;
+        } else {
+          out += (char)c;
+        }
     }
   }
   return out;
 }
+
+// Redirect / to /dashboard
+class RootRedirectHandler : public AsyncWebHandler {
+ public:
+  bool canHandle(AsyncWebServerRequest *request) const override {
+    return request->url() == "/" && request->method() == HTTP_GET;
+  }
+  void handleRequest(AsyncWebServerRequest *request) override {
+    request->redirect("/dashboard");
+  }
+};
 
 class JsonApiHandler : public AsyncWebHandler {
  public:
@@ -192,6 +246,8 @@ class EntitiesApiHandler : public AsyncWebHandler {
     return request->url() == "/api/entities" && request->method() == HTTP_GET;
   }
   void handleRequest(AsyncWebServerRequest *request) override {
+    if (!check_api_auth(request)) { send_unauthorized(request); return; }
+
     std::string json = "{";
 
     // Numbers
@@ -284,6 +340,8 @@ class EntitySetHandler : public AsyncWebHandler {
     return request->url() == "/api/set" && request->method() == HTTP_POST;
   }
   void handleRequest(AsyncWebServerRequest *request) override {
+    if (!check_api_auth(request)) { send_unauthorized(request); return; }
+
     if (!request->hasParam("domain") || !request->hasParam("id")) {
       request->send(400, "text/plain", "Missing domain or id");
       return;
@@ -354,8 +412,10 @@ class WifiApiHandler : public AsyncWebHandler {
   }
   void handleRequest(AsyncWebServerRequest *request) override {
     if (request->method() == HTTP_GET) {
+      if (!check_api_auth(request)) { send_unauthorized(request); return; }
       handleGet(request);
     } else if (request->method() == HTTP_POST) {
+      if (!check_api_auth(request)) { send_unauthorized(request); return; }
       handlePost(request);
     } else {
       request->send(405, "text/plain", "Method not allowed");
@@ -415,6 +475,10 @@ class WifiApiHandler : public AsyncWebHandler {
     json += mac_str;
     json += "\"";
 
+    // Report whether auth is enabled (helps config page)
+    json += ",\"auth_enabled\":";
+    json += api_auth_enabled() ? "true" : "false";
+
     json += "}";
     request->send(200, "application/json", json.c_str());
   }
@@ -422,7 +486,9 @@ class WifiApiHandler : public AsyncWebHandler {
   void handlePost(AsyncWebServerRequest *request) {
     auto *wifi = esphome::wifi::global_wifi_component;
 
-    // Reset to defaults
+    // Support JSON body (preferred) and legacy query params for backward compat
+
+    // Check for reset
     if (request->hasParam("reset")) {
       wifi->save_wifi_sta("", "");
       request->send(200, "text/plain", "WiFi reset to defaults. Restarting...");
@@ -431,16 +497,20 @@ class WifiApiHandler : public AsyncWebHandler {
       return;
     }
 
-    // Save new credentials
-    if (!request->hasParam("ssid")) {
-      request->send(400, "text/plain", "Missing ssid parameter");
-      return;
-    }
-    std::string ssid = request->getParam("ssid")->value();
-    std::string password = request->hasParam("password") ? request->getParam("password")->value() : "";
+    // Get SSID and password from request params (body or query)
+    std::string ssid;
+    std::string password;
 
-    if (ssid.empty() || ssid.length() > 32) {
-      request->send(400, "text/plain", "SSID must be 1-32 characters");
+    if (request->hasParam("ssid")) {
+      ssid = request->getParam("ssid")->value();
+    }
+
+    if (request->hasParam("password")) {
+      password = request->getParam("password")->value();
+    }
+
+    if (ssid.empty()) {
+      request->send(400, "text/plain", "Missing ssid parameter");
       return;
     }
     if (!password.empty() && password.length() < 8) {
@@ -464,6 +534,8 @@ class RestartHandler : public AsyncWebHandler {
     return request->url() == "/api/restart" && request->method() == HTTP_POST;
   }
   void handleRequest(AsyncWebServerRequest *request) override {
+    if (!check_api_auth(request)) { send_unauthorized(request); return; }
+
     request->send(200, "text/plain", "Restarting...");
     delay(500);
     App.safe_reboot();
@@ -477,6 +549,8 @@ class DiagHandler : public AsyncWebHandler {
     return request->url() == "/api/diag" && request->method() == HTTP_GET;
   }
   void handleRequest(AsyncWebServerRequest *request) override {
+    if (!check_api_auth(request)) { send_unauthorized(request); return; }
+
     std::string json = "{";
 
     // I2C bus scan
@@ -539,6 +613,15 @@ static void register_json_endpoint() {
     ESP_LOGW("json", "Web server base not available");
     return;
   }
+
+  if (api_auth_enabled()) {
+    ESP_LOGI("json", "API authentication enabled (token set)");
+  } else {
+    ESP_LOGI("json", "API authentication disabled (no token)");
+  }
+
+  base->add_handler(new RootRedirectHandler());
+  ESP_LOGI("json", "Registered / -> /dashboard redirect");
 
   base->add_handler(new JsonApiHandler());
   ESP_LOGI("json", "Registered /json endpoint");
