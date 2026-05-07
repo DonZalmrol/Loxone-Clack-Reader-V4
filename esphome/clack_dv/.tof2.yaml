@@ -13,7 +13,7 @@ sensor:
     i2c_id: bus_a
     address: 0x29
     distance_mode: short
-    update_interval: 60s
+    update_interval: ${salt_level_update_interval}
     distance:
       id: vl53l1x_raw_distance
     range_status:
@@ -22,7 +22,7 @@ sensor:
   - platform: template
     name: ${clack_distance_tof}
     id: clack_distance_tof
-    update_interval: 60s
+    update_interval: ${salt_level_update_interval}
     unit_of_measurement: "cm"
     accuracy_decimals: 1
     device_class: distance
@@ -36,12 +36,7 @@ sensor:
         return id(vl53l1x_raw_distance).state;
       }
     filters:
-      - lambda: |-
-          if (isnan(x)) {
-            return 0;
-          } else {
-            return x;
-          }
+      - skip_initial: 1
       - lambda: return x/10;
       - clamp:
           min_value: 0.0

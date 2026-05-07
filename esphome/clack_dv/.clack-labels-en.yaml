@@ -69,6 +69,7 @@ substitutions:
   clack_water_leakage: Leakage detected
   clack_test_motor_run: Test button motor run
   clack_save_total_liters_used: Capacity used
+  clack_cycle_water_used: Cycle water used
   clack_save_total_operation_time: Operation time
   clack_brine_time_txt: Brine
   clack_backwash_time_txt: Backwash

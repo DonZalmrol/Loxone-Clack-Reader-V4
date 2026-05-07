@@ -11,6 +11,9 @@ sensor:
     filters:
       - throttle_average: 300ms
       - lambda: |-
+          if (id(pulse_per_liter) <= 0.0f) {
+            return 0.0f;
+          }
           return x / id(pulse_per_liter);
     on_value:
       then:
@@ -36,6 +39,9 @@ sensor:
       accuracy_decimals: 1
       filters:
         - lambda: |-
+            if (id(pulse_per_liter) <= 0.0f) {
+              return 0.0f;
+            }
             return x / id(pulse_per_liter);
       on_value:
         then:

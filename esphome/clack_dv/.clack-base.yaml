@@ -2,6 +2,9 @@
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
+  platformio_options:
+    build_flags:
+      - '-DCLACK_API_TOKEN=\"${api_token}\"'
   includes:
     - dashboard.h
     - config_page.h
@@ -57,11 +60,11 @@ globals:
     restore_value: yes
     initial_value: '0.0'
 
-  # Clack DV flowmeter 28.60  / Clack WS1: 16.30
+  # Clack WS1 flowmeter 16.30  / Clack DV: 28.60
   - id: pulse_per_liter
     type: float
     restore_value: yes
-    initial_value: '28.60'
+    initial_value: '16.30'
 
   # Define a global variable for the chlorinator delay duration in minutes
   - id: duration
@@ -163,6 +166,21 @@ globals:
     restore_value: yes
     initial_value: '0.0'
 
+  - id: cycle_water_start
+    type: float
+    restore_value: yes
+    initial_value: '0.0'
+
+  - id: cycle_water_accumulator
+    type: float
+    restore_value: yes
+    initial_value: '0.0'
+
+  - id: cycle_water_used
+    type: float
+    restore_value: yes
+    initial_value: '0.0'
+
   - id: total_run_time_regen
     type: int
     restore_value: yes
@@ -212,6 +230,13 @@ script:
   # Script "on_boot"
   - id: on_boot
     then:
+      # Reset cycle state — a reboot always interrupts any active cycle
+      - lambda: |-
+          id(cycle_step) = "Idle";
+          id(start_time) = 0;
+          id(start_time_total) = 0;
+          id(wait_on_delay) = false;
+          id(water_meter_freeze) = false;
       - component.update: clack_saltfill_last
       - component.update: clack_resinclean_last
       - component.update: clack_regeneration_last
@@ -227,6 +252,7 @@ script:
           id: clack_flow_rate
           state: 0
       - component.update: clack_save_total_liters_used
+      - component.update: clack_cycle_water_used
       - component.update: clack_save_total_operation_time
       - component.update: clack_backwash_time
       - component.update: clack_brine_time
@@ -269,17 +295,22 @@ script:
   - id: check_leakage
     mode: restart
     then:
+      - delay: !lambda "return id(duration_leakage) * 60 * 1000;"
       - if:
           condition:
             binary_sensor.is_on: clack_water_flowing
           then:
-            - delay: !lambda "return id(duration_leakage) * 60 * 1000;"
             - lambda: 'id(leakage_detected) = true;'
+            - binary_sensor.template.publish:
+                id: clack_water_leakage
+                state: true
             - wait_until:
                 condition:
                   binary_sensor.is_off: clack_water_flowing
-                timeout: 20s
             - lambda: 'id(leakage_detected) = false;'
+            - binary_sensor.template.publish:
+                id: clack_water_leakage
+                state: false
 
   # Script "clack_motor_run"
   - id: clack_motor_run
@@ -314,11 +345,50 @@ script:
   - id: reset_water_meter
     mode: restart
     then:
+      - if:
+          condition:
+            lambda: 'return id(start_time_total) > 0;'
+          then:
+            - script.execute: checkpoint_cycle_water_usage
+            - script.wait: checkpoint_cycle_water_usage
       - pulse_meter.set_total_pulses:
           id: clack_flow_rate
           value: !lambda |-
             id(water_meter_force_overwrite) = true;
             return 0;
+
+  - id: start_cycle_water_tracking
+    mode: single
+    then:
+      - lambda: |-
+          id(cycle_water_start) = id(totalWaterUsage);
+          id(cycle_water_accumulator) = 0.0f;
+          id(cycle_water_used) = 0.0f;
+      - component.update: clack_cycle_water_used
+
+  - id: checkpoint_cycle_water_usage
+    mode: single
+    then:
+      - lambda: |-
+          float delta = id(totalWaterUsage) - id(cycle_water_start);
+          if (delta > 0.0f) {
+            id(cycle_water_accumulator) += delta;
+          }
+          id(cycle_water_start) = 0.0f;
+          id(cycle_water_used) = id(cycle_water_accumulator);
+      - component.update: clack_cycle_water_used
+
+  - id: finalize_cycle_water_tracking
+    mode: single
+    then:
+      - lambda: |-
+          float delta = id(totalWaterUsage) - id(cycle_water_start);
+          if (delta > 0.0f) {
+            id(cycle_water_accumulator) += delta;
+          }
+          id(cycle_water_used) = id(cycle_water_accumulator);
+          id(cycle_water_start) = id(totalWaterUsage);
+      - component.update: clack_cycle_water_used
 
   # Script "decide_cycle"
   - id: decide_cycle
@@ -478,6 +548,8 @@ script:
     then:
       - lambda: |-
           id(start_time_total) = id(sntp_time).now().timestamp;
+      - script.execute: start_cycle_water_tracking
+      - script.wait: start_cycle_water_tracking
       - component.update: clack_cycle_total_runtime
 
   - id: start_brine_cycle
@@ -629,6 +701,8 @@ script:
   - id: update_total_run_time
     mode: single
     then:
+      - script.execute: finalize_cycle_water_tracking
+      - script.wait: finalize_cycle_water_tracking
       - lambda: |-
           id(save_total_run_time) = id(sntp_time).now().timestamp - id(start_time_total);
       - component.update: clack_total_run_time
@@ -663,6 +737,7 @@ interval:
               return id(start_time_total) > 0;
           then:
             - component.update: clack_cycle_total_runtime
+            - component.update: clack_cycle_water_used
 
 binary_sensor:
   - platform: status
@@ -690,6 +765,12 @@ binary_sensor:
             binary_sensor.is_on: clack_water_flowing
           then:
             - script.execute: check_leakage
+          else:
+            - script.stop: check_leakage
+            - lambda: 'id(leakage_detected) = false;'
+            - binary_sensor.template.publish:
+                id: clack_water_leakage
+                state: false
 
   - platform: template
     name: ${clack_water_leakage}
@@ -916,6 +997,9 @@ sensor:
       const float max_distance = id(clack_saltlevel_height_max).state;
       const float min_distance = id(clack_saltlevel_height_min).state;
       float salt_level_distance = max_distance - min_distance;
+      if (salt_level_distance <= 0.0f) {
+        return 0;
+      }
       float salt_level_height = id(clack_height).state;
       float percentage = (salt_level_height / salt_level_distance) * 100;
       return int(percentage);
@@ -1042,6 +1126,9 @@ sensor:
       float current_time = id(sntp_time).now().timestamp;
       float total_hours = (current_time - regen_last_time) / 3600;
       float capacity_hours = int(id(clack_capacity_days).state) * 24;
+      if (capacity_hours <= 0.0f) {
+        return 0;
+      }
       float remaining_hours = capacity_hours - total_hours;
       float percentage = (remaining_hours / capacity_hours) * 100;
       return percentage;
@@ -1079,6 +1166,27 @@ sensor:
     update_interval: never
     lambda: |-
       return id(save_total_liters_used);
+
+  ##
+  # Sensor "clack_cycle_water_used"
+  - platform: template
+    name: ${clack_cycle_water_used}
+    id: clack_cycle_water_used
+    icon: mdi:water-sync
+    unit_of_measurement: L
+    device_class: water
+    state_class: total
+    accuracy_decimals: 1
+    update_interval: never
+    lambda: |-
+      if (id(start_time_total) > 0) {
+        float delta = id(totalWaterUsage) - id(cycle_water_start);
+        if (delta < 0.0f) {
+          delta = 0.0f;
+        }
+        return id(cycle_water_accumulator) + delta;
+      }
+      return id(cycle_water_used);
 
   ##
   # Sensor "clack_cycle_runtime"
@@ -1310,6 +1418,9 @@ text_sensor:
       int64_t current_time = id(sntp_time).now().timestamp;
       int64_t total_hours = (current_time - regen_last_time) / 3600;
       int64_t capacity_hours = int(id(clack_capacity_days).state) * 24;
+      if (capacity_hours <= 0) {
+        return std::string("Unknown");
+      }
       int64_t remaining_hours = capacity_hours - total_hours;
       int days = remaining_hours / 24;
       int hours = remaining_hours % 24;
@@ -1331,6 +1442,9 @@ text_sensor:
       int64_t current_time = id(sntp_time).now().timestamp;
       int64_t total_hours = (current_time - resinclean_last_time) / 3600;
       int64_t capacity_hours = int(id(resinclean_capacity_days).state) * 24;
+      if (capacity_hours <= 0) {
+        return std::string("Unknown");
+      }
       int64_t remaining_hours = capacity_hours - total_hours;
       int days = remaining_hours / 24;
       int hours = remaining_hours % 24;
@@ -1461,9 +1575,9 @@ number:
     mode: box
     step: 0.05
     entity_category: config
-    min_value: 0
+    min_value: 0.1
     max_value: 50
-    initial_value: 28.60
+    initial_value: 16.30
     restore_value: yes
     unit_of_measurement: ""
     on_value:
@@ -1540,8 +1654,8 @@ number:
     step: 50
     entity_category: config
     min_value: 0
-    max_value: 12000
-    initial_value: 3700
+    max_value: 15000
+    initial_value: 7500
     restore_value: yes
     unit_of_measurement: L
     on_value:
@@ -1558,8 +1672,8 @@ number:
     mode: box
     step: 1
     entity_category: config
-    min_value: 0
-    max_value: 21
+    min_value: 1
+    max_value: 365
     initial_value: 14
     restore_value: yes
     unit_of_measurement: ${days}
