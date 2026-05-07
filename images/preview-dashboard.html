@@ -27,6 +27,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .dot.online{background:var(--green);box-shadow:0 0 6px var(--green)}
 .refresh-info{font-size:.7em;color:var(--text-dim)}
 
+/* Leakage banner */
+.leak-banner{display:none;max-width:1200px;margin:0 auto 16px;padding:14px 20px;
+  background:linear-gradient(90deg,#991b1b,#dc2626);border-radius:var(--radius);
+  text-align:center;font-weight:700;font-size:1.1em;color:#fff;
+  box-shadow:0 0 20px rgba(248,113,113,.4)}
+
 /* Hero section */
 .hero{display:flex;gap:16px;max-width:1200px;margin:0 auto 20px;flex-wrap:wrap;justify-content:center}
 .hero-card{background:var(--card);border-radius:var(--radius);padding:20px;
@@ -67,6 +73,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .flow-unit{font-size:.4em;font-weight:400;color:var(--text-dim);margin-left:4px}
 .flow-status{margin-top:8px;font-size:.8em;display:flex;align-items:center;gap:6px}
 .flow-dot{width:8px;height:8px;border-radius:50%;background:var(--text-dim)}
+.flow-dot.active{background:var(--blue);box-shadow:0 0 8px var(--blue)}
+
+/* Top metrics */
+.meter-card,.leak-card{min-width:160px;justify-content:center}
+.meter-val,.leak-val{font-size:2em;font-weight:700;line-height:1.1}
+.meter-unit{font-size:.45em;font-weight:400;color:var(--text-dim);margin-left:4px}
+.leak-status{margin-top:8px;font-size:.8em;display:flex;align-items:center;gap:6px;color:var(--green)}
+.leak-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
 
 /* Cycle section */
 .cycle-section{max-width:1200px;margin:0 auto 20px;background:var(--card);
@@ -75,15 +89,38 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   flex-wrap:wrap;gap:8px;margin-bottom:16px}
 .cycle-header .ch-title{font-size:.75em;text-transform:uppercase;letter-spacing:1px;
   color:var(--text-dim);display:flex;align-items:center;gap:6px}
-.cycle-mode{font-size:.75em;color:var(--accent);background:rgba(56,189,248,.1);
-  padding:3px 10px;border-radius:12px}
+.cycle-stats{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0 0}
+.cycle-stat{background:var(--card-hover);border-radius:8px;padding:6px 10px;font-size:.78em;
+  display:flex;align-items:center;gap:6px;border-left:3px solid var(--accent)}
+.cycle-stat .lbl{color:var(--text-dim)}
+.cycle-stat .val{font-weight:700;color:var(--text)}
+.stepper{display:flex;align-items:flex-start;position:relative;overflow-x:auto;padding:10px 0 12px}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:150px}
+.step-dot{width:120px;height:120px;border-radius:50%;border:4px solid var(--input-border);
+  background:var(--card);display:flex;align-items:center;justify-content:center;
+  font-size:3.2em;font-weight:700;color:var(--text-dim);z-index:2}
+.step.done .step-dot{border-color:var(--green);background:var(--green);color:#0f172a}
+.step.active .step-dot{border-color:var(--accent);background:var(--accent);color:#0f172a;box-shadow:0 0 12px var(--accent)}
+.step-line{position:absolute;top:60px;left:50%;width:100%;height:4px;background:var(--input-border);z-index:1;color:var(--input-border)}
+.step-line:after{content:'';position:absolute;right:18px;top:50%;transform:translateY(-50%);
+  border-left:12px solid currentColor;border-top:8px solid transparent;border-bottom:8px solid transparent}
+.step:last-child .step-line{display:none}
+.step.done .step-line{background:var(--green);color:var(--green)}
+.step.active .step-line{background:linear-gradient(90deg,var(--accent),var(--input-border));color:var(--accent)}
+.step-name{font-size:1em;color:var(--text-dim);margin-top:10px;text-align:center;white-space:nowrap}
+.step.active .step-name{color:var(--accent);font-weight:600}
+.step.done .step-name{color:var(--green)}
+.step-time{font-size:.9em;color:var(--text-dim);margin-top:4px;text-align:center}
+.step.active .step-time{color:var(--accent)}
 .cycle-idle{text-align:center;padding:12px 0;color:var(--text-dim);font-size:.9em}
 .cycle-idle .idle-icon{font-size:1.5em;margin-bottom:4px}
-.cycle-last{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px;font-size:.8em}
-.cycle-last-item{background:var(--card-hover);padding:5px 10px;border-radius:8px;
+.cycle-last{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px;font-size:1em}
+.cycle-last-item{background:var(--card-hover);padding:8px 12px;border-radius:8px;
   display:flex;gap:6px;align-items:center}
-.cycle-last-item .lbl{color:var(--text-dim)}
+.cycle-last-item .lbl{color:var(--text-dim);display:flex;align-items:center;gap:5px}
+.cycle-last-item .step-icon{font-size:2em;line-height:1}
 .cycle-last-item .val{font-weight:600}
+.cycle-arrow{display:flex;align-items:center;color:var(--accent);font-weight:700}
 
 /* Cards grid */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
@@ -101,6 +138,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .card.power{border-left:3px solid var(--yellow)}
 .card.system{border-left:3px solid var(--green)}
 .card.alert{border-left:3px solid var(--red)}
+.card.ok{border-left:3px solid var(--green)}
+.card.warn{border-left:3px solid var(--red)}
+.value .ok{color:var(--green)}
+.value .warn{color:var(--red)}
 .salt-bar{height:8px;border-radius:4px;background:#334155;margin-top:12px;overflow:hidden}
 .salt-bar .fill{height:100%;border-radius:4px}
 .links{text-align:center;margin-top:24px;padding:12px 0;font-size:.8em}
@@ -118,7 +159,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 </style>
 </head>
 <body>
-<div class="banner">&#x1F4CB; Static preview with sample data &mdash; on the device this page auto-refreshes from /json</div>
+<div class="banner">&#x1F4CB; Static GitHub preview with sample data &mdash; on the device this page auto-refreshes from /json</div>
 
 <div class="header">
   <h1>&#x1F4A7; Clack Reader</h1>
@@ -131,7 +172,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   <span class="refresh-info">Updated 2s ago</span>
 </div>
 
-<!-- Hero: Tank + Gauges + Flow -->
+<div class="leak-banner">&#x1F6A8; WATER LEAKAGE DETECTED &#x1F6A8;</div>
+
+<!-- Hero: Tank + Gauges + Water Meter + Flow + Leak -->
 <div class="hero">
   <div class="hero-card tank-card">
     <div class="hero-title">&#x1F9C2; Salt Level</div>
@@ -175,12 +218,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     </div>
   </div>
 
+  <div class="hero-card meter-card">
+    <div class="hero-title">&#x1F6B0; Water Meter</div>
+    <div class="meter-val">2700.3<span class="meter-unit">L</span></div>
+  </div>
+
   <div class="hero-card flow-card">
     <div class="hero-title">&#x1F30A; Flow Rate</div>
-    <div class="flow-val">0.00<span class="flow-unit">L/min</span></div>
+    <div class="flow-val">2.40<span class="flow-unit">L/min</span></div>
     <div class="flow-status">
-      <span class="flow-dot"></span>
-      <span style="color:var(--text-dim)">No flow</span>
+      <span class="flow-dot active"></span>
+      <span style="color:var(--blue)">Flowing</span>
+    </div>
+  </div>
+
+  <div class="hero-card leak-card">
+    <div class="hero-title">&#x1F6A8; Leak Detection</div>
+    <div class="leak-val">OK</div>
+    <div class="leak-status">
+      <span class="leak-dot"></span>
+      <span>No leak</span>
     </div>
   </div>
 </div>
@@ -189,18 +246,61 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 <div class="cycle-section">
   <div class="cycle-header">
     <div class="ch-title">&#x1F504; Cleaning Cycle</div>
-    <div class="cycle-mode">Downflow - Post fill</div>
   </div>
-  <div class="cycle-idle">
-    <div class="idle-icon">&#x2705;</div>Idle &mdash; No active cycle
+  <div class="stepper">
+    <div class="step done">
+      <div class="step-line"></div>
+      <div class="step-dot" title="Backwash">&#x1F30A;</div>
+      <div class="step-name">Backwash</div>
+      <div class="step-time">0h 10m 0s</div>
+    </div>
+    <div class="step done">
+      <div class="step-line"></div>
+      <div class="step-dot" title="Brine">&#x1F9C2;</div>
+      <div class="step-name">Brine</div>
+      <div class="step-time">0h 45m 10s</div>
+    </div>
+    <div class="step done">
+      <div class="step-line"></div>
+      <div class="step-dot" title="Backwash2">&#x1F30A;</div>
+      <div class="step-name">Backwash2</div>
+      <div class="step-time">0h 6m 0s</div>
+    </div>
+    <div class="step active">
+      <div class="step-line"></div>
+      <div class="step-dot" title="Rinse">&#x1F6BF;</div>
+      <div class="step-name">Rinse</div>
+      <div class="step-time">0h 3m 42s</div>
+    </div>
+    <div class="step">
+      <div class="step-line"></div>
+      <div class="step-dot" title="Fill">&#x1F4A7;</div>
+      <div class="step-name">Fill</div>
+      <div class="step-time"></div>
+    </div>
   </div>
-  <div style="text-align:center;font-size:.7em;color:var(--text-dim);margin-top:4px">Last cycle step times:</div>
+  <div class="cycle-stats">
+    <div class="cycle-stat"><span class="lbl">Current step time</span><span class="val">0h 3m 42s</span></div>
+    <div class="cycle-stat"><span class="lbl">Total time</span><span class="val">1h 4m 52s</span></div>
+    <div class="cycle-stat"><span class="lbl">Cycle water</span><span class="val">112.4 L</span></div>
+    <div class="cycle-stat"><span class="lbl">Cleaning Cycle Type</span><span class="val">Downflow - Post fill</span></div>
+  </div>
+  <div style="text-align:center;font-size:.7em;color:var(--text-dim);margin-top:14px">Last cycle step times:</div>
   <div class="cycle-last">
-    <div class="cycle-last-item"><span class="lbl">Backwash</span><span class="val">0h 10m 0s</span></div>
-    <div class="cycle-last-item"><span class="lbl">Brine</span><span class="val">0h 45m 10s</span></div>
-    <div class="cycle-last-item"><span class="lbl">Rinse</span><span class="val">0h 5m 0s</span></div>
-    <div class="cycle-last-item"><span class="lbl">Fill</span><span class="val">0h 8m 30s</span></div>
-    <div class="cycle-last-item"><span class="lbl">Total</span><span class="val">1h 8m 40s</span></div>
+    <div class="cycle-last-item"><span class="lbl"><span class="step-icon">&#x1F30A;</span>Backwash</span><span class="val">0h 10m 0s</span></div>
+    <span class="cycle-arrow">&rarr;</span>
+    <div class="cycle-last-item"><span class="lbl"><span class="step-icon">&#x1F9C2;</span>Brine</span><span class="val">0h 45m 10s</span></div>
+    <span class="cycle-arrow">&rarr;</span>
+    <div class="cycle-last-item"><span class="lbl"><span class="step-icon">&#x1F30A;</span>Backwash2</span><span class="val">0h 6m 0s</span></div>
+    <span class="cycle-arrow">&rarr;</span>
+    <div class="cycle-last-item"><span class="lbl"><span class="step-icon">&#x1F6BF;</span>Rinse</span><span class="val">0h 5m 0s</span></div>
+    <span class="cycle-arrow">&rarr;</span>
+    <div class="cycle-last-item"><span class="lbl"><span class="step-icon">&#x1F4A7;</span>Fill</span><span class="val">0h 8m 30s</span></div>
+  </div>
+  <div class="cycle-stats">
+    <div class="cycle-stat"><span class="lbl">Cleaning Cycle Type</span><span class="val">Downflow - Post fill</span></div>
+    <div class="cycle-stat"><span class="lbl">Total time</span><span class="val">1h 14m 40s</span></div>
+    <div class="cycle-stat"><span class="lbl">Last cycle water</span><span class="val">128.6 L</span></div>
   </div>
 </div>
 
@@ -215,8 +315,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     <div class="value">15.3<span class="unit">cm</span></div></div>
   <div class="card salt"><div class="title"><span class="icon">&#x1F9C2;</span> Last Salt Fill</div>
     <div class="value" style="font-size:1.3em">Thu 10 Apr 09:15</div></div>
-  <div class="card alert"><div class="title"><span class="icon">&#x26A0;</span> Fill Salt?</div>
-    <div class="value" style="color:var(--text-dim)">no</div></div>
+  <div class="card ok"><div class="title"><span class="icon">&#x26A0;</span> Fill Salt?</div>
+    <div class="value"><span class="ok">No</span></div></div>
 
   <div class="card water"><div class="title"><span class="icon">&#x1F30A;</span> Flow Rate</div>
     <div class="value">0.00<span class="unit">L/min</span></div></div>
