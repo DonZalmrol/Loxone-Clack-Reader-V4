@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/27166718/README.md)
 # 💧 Clack Reader V4 — Loxone Edition
 
 ESPHome firmware for the **Aqmos CM-120 water softener** (Clack WS1 CI valve) with TOF salt level sensor, water meter pulse counting, chlorinator relay control, and 3-channel power monitoring. This fork adds a **JSON API**, **HTML5 dashboard**, and **web configuration page** for integration with **Loxone Miniserver** (or any HTTP-polling system), replacing the need for Home Assistant.
@@ -48,16 +47,16 @@ graph LR
 | Feature | Description |
 |---------|-------------|
 | **JSON API** (`/json`) | All sensor values as a flat JSON object — perfect for Loxone Virtual HTTP Inputs |
-| **HTML5 Dashboard** (`/dashboard`) | 20-card dark-themed layout with salt level bar, auto-refreshes every 5 seconds |
+| **HTML5 Dashboard** (`/dashboard`) | Dark-themed live dashboard with salt tank, capacity gauges, top Water Meter / Flow Rate / Leak Detection cards, and a cleaning-cycle stepper |
 | **Configuration Page** (`/config`) | Web UI for all settings, WiFi management, and device restart |
 | **Salt Level Monitoring** | VL53L1X TOF sensor (up to 4m range) measures distance → calculates salt height & percentage |
 | **Water Meter** | Pulse counting at 16.30 pulses/liter for Clack WS1 CI flowmeter (Aqmos CM-120) |
 | **Capacity Tracking** | Liters, m³, percentage, and days remaining until next regeneration |
-| **Regeneration Cycle Tracking** | Detects and times each cycle phase (backwash, brine, rinse, fill, service) |
+| **Regeneration Cycle Tracking** | Detects and times each cycle phase (backwash, brine, rinse, fill, service) and records water used during the cycle |
 | **Chlorinator Control** | GPIO relay with configurable timed auto-off delay (0–45 min) |
 | **3-Channel Power Monitoring** | INA3221 measures power for Clack PCB, ESP, and Chlorinator independently |
 | **Water Hardness** | Configurable slider in °D with auto-calculated °F and classification |
-| **Leakage Detection** | Alerts when continuous water flow exceeds configurable timeout |
+| **Leakage Detection** | Alerts when continuous water flow exceeds the configurable delay, with a top dashboard status card and red alert banner |
 | **Resin Cleaning Tracker** | Tracks days since last resin clean with configurable interval |
 | **WiFi Watchdog** | Auto-reboots if WiFi disconnects for >5 minutes |
 | **WiFi Management** | Change SSID/password or reset to defaults via `/config` page |
@@ -107,7 +106,7 @@ esphome/
 ├── clack.yaml                          # Main config — edit this file
 ├── secrets.yaml                        # WiFi SSID/password + optional static IP
 ├── json_endpoint.h                     # C++ — /json, /dashboard, /config, /api/* endpoints
-├── dashboard.h                         # C++ — HTML5 dashboard (20 sensor cards)
+├── dashboard.h                         # C++ — HTML5 dashboard (top metrics, cycle stepper, sensor cards)
 ├── config_page.h                       # C++ — Configuration page with WiFi management
 └── clack_dv/
     ├── .clack-base.yaml                # Core: globals, scripts, sensors, sliders, cycle tracking
@@ -190,16 +189,16 @@ python -m esphome upload esphome/clack.yaml --device <IP_or_COM_port>
 |-----|-------------|
 | `http://<device-ip>/` | Redirects to `/dashboard` |
 | `http://<device-ip>/json` | JSON API — all sensor values as flat JSON |
-| `http://<device-ip>/dashboard` | HTML5 dashboard — visual monitoring with 20 cards |
+| `http://<device-ip>/dashboard` | HTML5 dashboard — top metrics, cycle tracking, and visual monitoring cards |
 | `http://<device-ip>/config` | Configuration page — settings, WiFi management, restart |
 
 ### 🖼️ Page Previews
 
-Below are screenshots of each page with sample data. You can also open the interactive HTML mockups in [`images/`](images/) to explore them in your browser.
+Below are screenshots of each page with dummy sample data. You can also open the static HTML mockups in [`images/`](images/) to explore the GitHub preview pages in your browser.
 
 #### `/dashboard` — Sensor Dashboard
 
-20 color-coded cards showing salt, water, power, and system status at a glance.
+Top metric cards for Water Meter, Flow Rate, and Leak Detection, plus color-coded cards showing salt, water, power, and system status at a glance.
 
 ![Dashboard Preview](images/preview-dashboard.png)
 
@@ -238,6 +237,8 @@ Flat JSON with all sensor values, binary states, configurable numbers, and selec
 ### 🔐 API Authentication
 
 When `api_token` is set to a non-empty value in `secrets.yaml`, all `/api/*` endpoints require a valid token. The `/json`, `/dashboard`, and `/config` endpoints remain open (no authentication required).
+
+The `/config` page can pass the token to its API calls when opened as `http://<device-ip>/config?token=YOUR_TOKEN`. If a protected API call returns `401`, the page prompts for the token and stores it in the browser for later visits.
 
 **Two ways to authenticate:**
 
@@ -298,6 +299,8 @@ api_token: ""
   "water_softener_percent_time_left_unit": "%",
   "capacity_used": 1150.0,
   "capacity_used_unit": "L",
+    "cycle_water_used": 128.6,
+    "cycle_water_used_unit": "L",
 
   "water_hardness_d": 16,
   "water_hardness_d_unit": "°D",
@@ -406,6 +409,7 @@ api_token: ""
 | `water_softener_percent_ltr_left` | number | % | Capacity remaining as percentage of liters |
 | `water_softener_percent_time_left` | number | % | Capacity remaining as percentage of time |
 | `capacity_used` | number | L | Total liters used during last regeneration cycle |
+| `cycle_water_used` | number | L | Water used by the current or last cleaning/regeneration cycle |
 | `water_hardness_f` | number | °F | Water hardness (French degrees, auto-calculated) |
 
 #### Power Sensors
@@ -529,6 +533,7 @@ sequenceDiagram
 | Salt Height | `\v"salt_level_height":\v` | `22.5` |
 | Water Meter | `\v"water_meter":\v` | `1250.5` |
 | Flow Rate | `\v"water_flow_rate":\v` | `0.0` |
+| Cycle Water Used | `\v"cycle_water_used":\v` | `128.6` |
 | Liters Left | `\v"water_softener_ltr_left":\v` | `1950` |
 | m³ Left | `\v"water_softener_m3_left":\v` | `1.95` |
 | % Liters Left | `\v"water_softener_percent_ltr_left":\v` | `52.7` |
@@ -559,11 +564,15 @@ Access at `http://<device-ip>/dashboard`
 
 The dashboard features:
 - **Dark theme** with card-based layout
-- **20 sensor cards** organized by category with color-coded borders:
+- **Top metric cards** for Water Meter, Flow Rate, and Leak Detection
+- **Cleaning-cycle view** with large 120 px step icons, arrows between steps, elapsed time, cycle type, total time, and cycle water usage
+- **Sensor cards** organized by category with color-coded borders:
   - 🔵 **Salt** (cyan) — level %, height, distance, fill alert
   - 🔵 **Water** (blue) — meter, capacity (m³ + L), regeneration, cycle step, time to regen, hardness °D, °F, class
   - 🟡 **Power** (yellow) — Clack power, ESP power, chlorinator power, voltage, chlorinator relay
   - 🟢 **System** (green) — WiFi signal %, ESPHome version, uptime, function mode
+- **Fill Salt? status color** — green when no refill is needed, red when salt should be filled
+- **Leakage warning** — normal green status card plus red alert banner when `leakage_detected` becomes true
 - **Animated salt level bar** with gradient color coding (green >50%, yellow >25%, red ≤25%)
 - **Auto-refresh** every 5 seconds from `/json`
 - **Online/Offline indicator** with connection status dot
@@ -619,12 +628,12 @@ Toggle switches for chlorinator relay and other controllable entities.
 
 | Setting | Range | Default | Unit | Description |
 |---------|-------|---------|------|-------------|
-| Set pulse per ltr | 0–50 | 16.30 | — | Pulses per liter (16.30 for Clack WS1 CI / CM-120, 28.60 for DV) |
+| Set pulse per ltr | 0.1–50 | 16.30 | — | Pulses per liter (16.30 for Clack WS1 CI / CM-120, 28.60 for DV) |
 | Min salt distance | 0–10 | 0 | cm | Sensor distance when salt tank is full |
 | Max salt distance | 0–100 | 30 | cm | Sensor distance when salt tank is empty |
 | Fill salt distance | 0–10 | 1.5 | cm | Salt height below which "fill salt = yes" |
 | Capacity in liters | 0–15000 | 7500 | L | Water softener capacity per regeneration cycle (CM-120: 12,000 L at 10°dH) |
-| Capacity in days | 0–21 | 14 | days | Expected days between regenerations |
+| Capacity in days | 1–365 | 14 | days | Expected days between regenerations |
 | Resinclean days | 0–365 | 120 | days | Interval between resin cleaning |
 | Chlorinator active time | 0–45 | 10 | min | Chlorinator auto-off timer |
 | Leakage alarm delay | 0–60 | 30 | min | Continuous flow before leakage alarm |
@@ -660,7 +669,7 @@ The **AQMOS CM-120** is a single-cabinet water softener with a **Clack WS 1 CI**
 | **Max salt distance** | **35.0 cm** | Distance from sensor when salt is EMPTY (down to water level). Measure with empty tank. |
 | **Fill salt distance** | **3.0 cm** | Salt height below which "Fill salt = yes" triggers. ~10% of usable range. |
 | **Capacity in liters** | **7500 L** | CM-120 rated 12,000 L at 10°dH → ~7,500 L at 16°dH. Adjust to match your water hardness. |
-| **Capacity in days** | **14** | Standard 2-week regeneration interval. Match to what the Clack head is programmed for. |
+| **Capacity in days** | **14** | Standard 2-week regeneration interval. Can be increased up to 365 days; match to what the Clack head is programmed for. |
 | **Water hardness °D** | **16 °D** | Typical tap water. Check your local water provider for the exact value. |
 | **Pulse per liter** | **16.30** | Correct for Clack WS1 CI flowmeter (CM-120). Use 28.60 for Clack DV. |
 

@@ -2,10 +2,10 @@
 
 # Build artifacts and cache
 /.esphome/
+/esphome/.esphome/
 
 # WiFi credentials and passwords
 secrets.yaml
-esphome/secrets.yaml
 
 # Compiled firmware binaries
 *.bin
