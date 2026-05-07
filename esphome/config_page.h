@@ -220,10 +220,50 @@ function renderSwitch(s){
 
 function esc(s){return s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}
 
+var API_TOKEN_KEY='clack_api_token';
+var apiToken=(new URLSearchParams(location.search)).get('token')||localStorage.getItem(API_TOKEN_KEY)||'';
+if(apiToken)localStorage.setItem(API_TOKEN_KEY,apiToken);
+
+function apiUrl(path,params){
+  const q=new URLSearchParams(params||{});
+  if(apiToken)q.set('token',apiToken);
+  const s=q.toString();
+  return s?path+'?'+s:path;
+}
+
+async function apiFetch(path,options,params){
+  let r=await fetch(apiUrl(path,params),options||{});
+  if(!r.ok){
+    const text=await r.text();
+    const needsToken=r.status===401||r.status===403||text.indexOf('Unauthorized')>=0;
+    if(needsToken){
+      const token=prompt('API token');
+      if(!token)throw new Error('API token required');
+      apiToken=token.trim();
+      localStorage.setItem(API_TOKEN_KEY,apiToken);
+      r=await fetch(apiUrl(path,params),options||{});
+      if(r.ok)return r;
+      const retryText=await r.text();
+      throw new Error(retryText||('HTTP '+r.status));
+    }
+    throw new Error(text||('HTTP '+r.status));
+  }
+  return r;
+}
+
+async function apiJson(path,options,params){
+  const r=await apiFetch(path,options,params);
+  try{
+    return await r.json();
+  }catch(e){
+    throw new Error('Invalid API response');
+  }
+}
+
 async function setNumber(id){
   const v=document.getElementById('num_'+id).value;
   try{
-    const r=await fetch('/api/set?domain=number&id='+encodeURIComponent(id)+'&value='+encodeURIComponent(v),{method:'POST'});
+    const r=await apiFetch('/api/set',{method:'POST'},{domain:'number',id:id,value:v});
     if(r.ok)toast('Updated '+id);
     else toast('Failed: '+await r.text(),true);
   }catch(e){toast('Error: '+e.message,true)}
@@ -232,7 +272,7 @@ async function setNumber(id){
 async function setSelect(id){
   const v=document.getElementById('sel_'+id).value;
   try{
-    const r=await fetch('/api/set?domain=select&id='+encodeURIComponent(id)+'&option='+encodeURIComponent(v),{method:'POST'});
+    const r=await apiFetch('/api/set',{method:'POST'},{domain:'select',id:id,option:v});
     if(r.ok)toast('Updated '+id);
     else toast('Failed: '+await r.text(),true);
   }catch(e){toast('Error: '+e.message,true)}
@@ -240,7 +280,7 @@ async function setSelect(id){
 
 async function setSwitch(id,on){
   try{
-    const r=await fetch('/api/set?domain=switch&id='+encodeURIComponent(id)+'&state='+(on?'on':'off'),{method:'POST'});
+    const r=await apiFetch('/api/set',{method:'POST'},{domain:'switch',id:id,state:on?'on':'off'});
     if(r.ok)toast((on?'Enabled':'Disabled')+' '+id);
     else toast('Failed: '+await r.text(),true);
   }catch(e){toast('Error: '+e.message,true)}
@@ -252,8 +292,7 @@ async function saveWifi(){
   if(!ssid){toast('Please enter an SSID',true);return}
   if(!confirm('Save WiFi credentials and restart?\n\nSSID: '+ssid+'\n\nThe device will restart and try to connect to the new network.'))return;
   try{
-    const r=await fetch('/api/wifi',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ssid:ssid,password:pass})});
+    const r=await apiFetch('/api/wifi',{method:'POST'},{ssid:ssid,password:pass});
     if(r.ok){toast('WiFi saved! Restarting...');
       setTimeout(()=>{document.getElementById('wifi-ssid').textContent='Restarting...'},1000);
     }else toast('Failed: '+await r.text(),true);
@@ -263,8 +302,7 @@ async function saveWifi(){
 async function resetWifi(){
   if(!confirm('Reset WiFi to firmware defaults and restart?'))return;
   try{
-    const r=await fetch('/api/wifi',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({reset:true})});
+    const r=await apiFetch('/api/wifi',{method:'POST'},{reset:'1'});
     if(r.ok)toast('WiFi reset! Restarting...');
     else toast('Failed: '+await r.text(),true);
   }catch(e){toast('Error: '+e.message,true)}
@@ -273,28 +311,26 @@ async function resetWifi(){
 async function restartDevice(){
   if(!confirm('Restart the device?'))return;
   try{
-    await fetch('/api/restart',{method:'POST'});
+    await apiFetch('/api/restart',{method:'POST'});
     toast('Restarting...');
   }catch(e){toast('Restarting...')}
 }
 
 async function loadEntities(){
   try{
-    const r=await fetch('/api/entities',{cache:'no-store'});
-    const d=await r.json();
+    const d=await apiJson('/api/entities',{cache:'no-store'});
     if(d.numbers)d.numbers.forEach(renderNumber);
     if(d.selects)d.selects.forEach(renderSelect);
     if(d.switches)d.switches.forEach(renderSwitch);
     if(!d.numbers||!d.numbers.length)document.getElementById('numbers-section').style.display='none';
     if(!d.selects||!d.selects.length)document.getElementById('selects-section').style.display='none';
     if(!d.switches||!d.switches.length)document.getElementById('switches-section').style.display='none';
-  }catch(e){toast('Failed to load entities',true)}
+  }catch(e){toast('Failed to load entities: '+e.message,true)}
 }
 
 async function loadWifi(){
   try{
-    const r=await fetch('/api/wifi',{cache:'no-store'});
-    const d=await r.json();
+    const d=await apiJson('/api/wifi',{cache:'no-store'});
     document.getElementById('wifi-ssid').textContent=d.ssid||'--';
     document.getElementById('wifi-ip').textContent=d.ip||'--';
     document.getElementById('wifi-gw').textContent=d.gateway||'--';

@@ -3,7 +3,7 @@
 // HTML5 Dashboard for Clack Reader V4
 // Served at /dashboard - auto-refreshes from /json
 // Features: salt tank visualization, capacity gauges, cycle stepper, flow rate,
-//           leakage banner, refresh indicator
+//           water meter, leakage status, refresh indicator
 
 static const char DASHBOARD_HTML[] PROGMEM = R"rawhtml(
 <!DOCTYPE html>
@@ -89,6 +89,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .flow-dot.active{background:var(--blue);box-shadow:0 0 8px var(--blue);animation:pulse-blue 1.5s infinite}
 @keyframes pulse-blue{0%,100%{box-shadow:0 0 6px var(--blue)}50%{box-shadow:0 0 16px var(--blue)}}
 
+/* Top metrics */
+.meter-card,.leak-card{min-width:160px;justify-content:center}
+.meter-val,.leak-val{font-size:2em;font-weight:700;line-height:1.1}
+.meter-unit{font-size:.45em;font-weight:400;color:var(--text-dim);margin-left:4px}
+.leak-status{margin-top:8px;font-size:.8em;display:flex;align-items:center;gap:6px;color:var(--green)}
+.leak-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.leak-card.alert .leak-val{color:var(--red)}
+.leak-card.alert .leak-status{color:var(--red)}
+.leak-card.alert .leak-dot{background:var(--red);box-shadow:0 0 8px var(--red);animation:leak-flash 1.5s infinite}
+
 /* Cycle section */
 .cycle-section{max-width:1200px;margin:0 auto 20px;background:var(--card);
   border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
@@ -96,34 +106,40 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   flex-wrap:wrap;gap:8px;margin-bottom:16px}
 .cycle-header .ch-title{font-size:.75em;text-transform:uppercase;letter-spacing:1px;
   color:var(--text-dim);display:flex;align-items:center;gap:6px}
-.cycle-mode{font-size:.75em;color:var(--accent);background:rgba(56,189,248,.1);
-  padding:3px 10px;border-radius:12px}
-.cycle-timer{font-size:.85em;font-weight:600;color:var(--accent)}
-.stepper{display:flex;align-items:flex-start;position:relative;overflow-x:auto;padding:8px 0}
-.step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:70px}
-.step-dot{width:32px;height:32px;border-radius:50%;border:3px solid var(--input-border);
+.cycle-stats{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0 0}
+.cycle-stat{background:var(--card-hover);border-radius:8px;padding:6px 10px;font-size:.78em;
+  display:flex;align-items:center;gap:6px;border-left:3px solid var(--accent)}
+.cycle-stat .lbl{color:var(--text-dim)}
+.cycle-stat .val{font-weight:700;color:var(--text)}
+.stepper{display:flex;align-items:flex-start;position:relative;overflow-x:auto;padding:10px 0 12px}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:150px}
+.step-dot{width:120px;height:120px;border-radius:50%;border:4px solid var(--input-border);
   background:var(--card);display:flex;align-items:center;justify-content:center;
-  font-size:.7em;font-weight:700;color:var(--text-dim);z-index:2;transition:all .3s}
+  font-size:3.2em;font-weight:700;color:var(--text-dim);z-index:2;transition:all .3s}
 .step.done .step-dot{border-color:var(--green);background:var(--green);color:#0f172a}
 .step.active .step-dot{border-color:var(--accent);background:var(--accent);color:#0f172a;
   box-shadow:0 0 12px var(--accent);animation:pulse 2s infinite}
-.step-line{position:absolute;top:16px;left:50%;width:100%;height:3px;
-  background:var(--input-border);z-index:1}
+.step-line{position:absolute;top:60px;left:50%;width:100%;height:4px;
+  background:var(--input-border);z-index:1;color:var(--input-border)}
+.step-line:after{content:'';position:absolute;right:18px;top:50%;transform:translateY(-50%);
+  border-left:12px solid currentColor;border-top:8px solid transparent;border-bottom:8px solid transparent}
 .step:last-child .step-line{display:none}
-.step.done .step-line{background:var(--green)}
-.step.active .step-line{background:linear-gradient(90deg,var(--accent),var(--input-border))}
-.step-name{font-size:.65em;color:var(--text-dim);margin-top:6px;text-align:center;white-space:nowrap}
+.step.done .step-line{background:var(--green);color:var(--green)}
+.step.active .step-line{background:linear-gradient(90deg,var(--accent),var(--input-border));color:var(--accent)}
+.step-name{font-size:1em;color:var(--text-dim);margin-top:10px;text-align:center;white-space:nowrap}
 .step.active .step-name{color:var(--accent);font-weight:600}
 .step.done .step-name{color:var(--green)}
-.step-time{font-size:.6em;color:var(--text-dim);margin-top:2px;text-align:center}
+.step-time{font-size:.9em;color:var(--text-dim);margin-top:4px;text-align:center}
 .step.active .step-time{color:var(--accent)}
 .cycle-idle{text-align:center;padding:12px 0;color:var(--text-dim);font-size:.9em}
 .cycle-idle .idle-icon{font-size:1.5em;margin-bottom:4px}
-.cycle-last{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px;font-size:.8em}
-.cycle-last-item{background:var(--card-hover);padding:5px 10px;border-radius:8px;
+.cycle-last{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px;font-size:1em}
+.cycle-last-item{background:var(--card-hover);padding:8px 12px;border-radius:8px;
   display:flex;gap:6px;align-items:center}
-.cycle-last-item .lbl{color:var(--text-dim)}
+.cycle-last-item .lbl{color:var(--text-dim);display:flex;align-items:center;gap:5px}
+.cycle-last-item .step-icon{font-size:2em;line-height:1}
 .cycle-last-item .val{font-weight:600}
+.cycle-arrow{display:flex;align-items:center;color:var(--accent);font-weight:700}
 @keyframes pulse{0%,100%{box-shadow:0 0 8px var(--accent)}50%{box-shadow:0 0 20px var(--accent)}}
 
 /* Cards grid */
@@ -143,6 +159,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .card.power{border-left:3px solid var(--yellow)}
 .card.system{border-left:3px solid var(--green)}
 .card.alert{border-left:3px solid var(--red)}
+.card.ok{border-left:3px solid var(--green)}
+.card.warn{border-left:3px solid var(--red)}
+.value .ok{color:var(--green)}
+.value .warn{color:var(--red)}
 .salt-bar{height:8px;border-radius:4px;background:#334155;margin-top:12px;overflow:hidden}
 .salt-bar .fill{height:100%;border-radius:4px;transition:width .6s ease}
 .links{text-align:center;margin-top:24px;padding:12px 0;font-size:.8em}
@@ -174,7 +194,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 <!-- Leakage Alert Banner -->
 <div class="leak-banner" id="leakBanner">&#x1F6A8; WATER LEAKAGE DETECTED &#x1F6A8;</div>
 
-<!-- Hero: Tank + Gauges + Flow -->
+<!-- Hero: Tank + Gauges + Water Meter + Flow + Leak -->
 <div class="hero">
   <div class="hero-card tank-card">
     <div class="hero-title">&#x1F9C2; Salt Level</div>
@@ -217,6 +237,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     </div>
   </div>
 
+  <div class="hero-card meter-card">
+    <div class="hero-title">&#x1F6B0; Water Meter</div>
+    <div class="meter-val"><span id="waterMeterVal">--</span><span class="meter-unit">L</span></div>
+  </div>
+
   <div class="hero-card flow-card">
     <div class="hero-title">&#x1F30A; Flow Rate</div>
     <div class="flow-val"><span id="flowVal">--</span><span class="flow-unit">L/min</span></div>
@@ -225,14 +250,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
       <span id="flowStatus">No flow</span>
     </div>
   </div>
+
+  <div class="hero-card leak-card" id="leakCard">
+    <div class="hero-title">&#x1F6A8; Leak Detection</div>
+    <div class="leak-val" id="leakVal">OK</div>
+    <div class="leak-status">
+      <span class="leak-dot" id="leakDot"></span>
+      <span id="leakStatus">No leak</span>
+    </div>
+  </div>
 </div>
 
 <!-- Cycle Progress -->
 <div class="cycle-section">
   <div class="cycle-header">
     <div class="ch-title">&#x1F504; Cleaning Cycle</div>
-    <div class="cycle-mode" id="cycleMode">--</div>
-    <div class="cycle-timer" id="cycleTimer"></div>
   </div>
   <div id="cycleBody"></div>
 </div>
@@ -263,6 +295,11 @@ var STEP_TIME_KEYS={
   Rinse:'rinse',Fill:'fill',Service:'service'
 };
 
+var STEP_ICONS={
+  Brine:'\u{1F9C2}',Backwash:'\u{1F30A}',Backwash2:'\u{1F30A}',
+  Rinse:'\u{1F6BF}',Fill:'\u{1F4A7}',Service:'\u{2699}'
+};
+
 var CARDS=[
   {id:'salt_pct',key:'salt_level_percent',label:'Salt Level',icon:'\u{1F9C2}',
    cls:'salt',fmt:function(v){return v!=null?Math.round(v)+'<span class="unit">%</span>':'--'},bar:true},
@@ -271,7 +308,15 @@ var CARDS=[
   {id:'salt_d',key:'salt_level_distance',label:'Sensor Distance',icon:'\u{1F4E1}',
    cls:'salt',fmt:function(v){return v!=null?v.toFixed(1)+'<span class="unit">cm</span>':'--'}},
   {id:'fill_salt',key:'fill_salt',label:'Fill Salt?',icon:'\u{26A0}',
-   cls:'alert',fmt:function(v){return v||'--'}},
+   cls:'alert',fmt:function(v){
+     if(!v)return'--';
+     var needsFill=String(v).toLowerCase()==='yes'||String(v).toLowerCase()==='ja';
+     return '<span class="'+(needsFill?'warn':'ok')+'">'+(needsFill?'Yes':'No')+'</span>';
+   },stateCls:function(v){
+     if(!v)return'alert';
+     var needsFill=String(v).toLowerCase()==='yes'||String(v).toLowerCase()==='ja';
+     return needsFill?'warn':'ok';
+   }},
   {id:'flow',key:'water_flow_rate',label:'Flow Rate',icon:'\u{1F30A}',
    cls:'water',fmt:function(v){return v!=null?v.toFixed(2)+'<span class="unit">L/min</span>':'--'}},
   {id:'wm',key:'water_meter',label:'Water Meter',icon:'\u{1F6B0}',
@@ -344,6 +389,11 @@ function fmtUptime(s){
   return'Uptime: '+(d?d+'d ':'')+(h?h+'h ':'')+(m?m+'m':'0m');
 }
 
+function stepIcon(step){return STEP_ICONS[step]||'\u{2022}'}
+function stepLabel(step){return '<span class="step-icon">'+stepIcon(step)+'</span>'+step}
+function fmtLiters(v){return v!=null?Number(v).toFixed(1)+' L':'-- L'}
+function cycleStat(label,value){return '<div class="cycle-stat"><span class="lbl">'+label+'</span><span class="val">'+value+'</span></div>'}
+
 function initCards(){
   var g=document.getElementById('grid');
   CARDS.forEach(function(c){
@@ -359,10 +409,19 @@ function initCards(){
 
 function updateLeakage(d){
   var banner=document.getElementById('leakBanner');
+  var card=document.getElementById('leakCard');
+  var val=document.getElementById('leakVal');
+  var status=document.getElementById('leakStatus');
   if(d.leakage_detected===true){
     banner.className='leak-banner show';
+    card.className='hero-card leak-card alert';
+    val.textContent='Detected';
+    status.textContent='Leak detected';
   }else{
     banner.className='leak-banner';
+    card.className='hero-card leak-card';
+    val.textContent='OK';
+    status.textContent='No leak';
   }
 }
 
@@ -424,6 +483,8 @@ function updateGauges(d){
 function updateFlow(d){
   var rate=d.water_flow_rate;
   var flowing=d.water_flowing;
+  var meter=d.water_meter;
+  document.getElementById('waterMeterVal').textContent=meter!=null?meter.toFixed(1):'--';
   document.getElementById('flowVal').textContent=rate!=null?rate.toFixed(2):'--';
   var dot=document.getElementById('flowDot');
   var status=document.getElementById('flowStatus');
@@ -442,35 +503,45 @@ function updateCycle(d){
   var step=d.cycle_step||'Idle';
   var mode=d.regeneration_mode||'';
   var body=document.getElementById('cycleBody');
-  var modeEl=document.getElementById('cycleMode');
-  var timerEl=document.getElementById('cycleTimer');
-  modeEl.textContent=mode||'--';
+  var water=d.cycle_water_used;
 
   if(step==='Idle'){
-    timerEl.textContent='';
     var html='<div class="cycle-idle"><div class="idle-icon">\u2705</div>Idle \u2014 No active cycle</div>';
     var lastTimes=[];
-    for(var name in STEP_TIME_KEYS){
+    var lastWater=d.cycle_water_used;
+    var orderedSteps=CYCLE_MODES[mode]||Object.keys(STEP_TIME_KEYS);
+    orderedSteps.forEach(function(name){
       var t=d[STEP_TIME_KEYS[name]];
       if(t&&t!=='0s'&&t!=='0m 0s'&&t!=='0h 0m 0s')lastTimes.push({name:name,time:t});
-    }
-    if(lastTimes.length>0){
-      html+='<div style="text-align:center;font-size:.7em;color:var(--text-dim);margin-top:4px">Last cycle step times:</div>';
-      html+='<div class="cycle-last">';
-      lastTimes.forEach(function(lt){
-        html+='<div class="cycle-last-item"><span class="lbl">'+lt.name+'</span><span class="val">'+lt.time+'</span></div>';
+    });
+    var totalTime=(d.run_time&&d.run_time!=='0s')?d.run_time:'';
+    html+='<div style="text-align:center;font-size:.7em;color:var(--text-dim);margin-top:4px">Last cycle step times:</div>';
+    html+='<div class="cycle-last">';
+    if(lastTimes.length){
+      lastTimes.forEach(function(lt,idx){
+        if(idx>0)html+='<span class="cycle-arrow">&rarr;</span>';
+        html+='<div class="cycle-last-item"><span class="lbl">'+stepLabel(lt.name)+'</span><span class="val">'+lt.time+'</span></div>';
       });
-      if(d.run_time&&d.run_time!=='0s')
-        html+='<div class="cycle-last-item"><span class="lbl">Total</span><span class="val">'+d.run_time+'</span></div>';
-      html+='</div>';
+    }else{
+      html+='<div class="cycle-last-item"><span class="lbl">No recorded steps</span><span class="val">--</span></div>';
     }
+    html+='</div>';
+    html+='<div class="cycle-stats">'+
+      cycleStat('Cleaning Cycle Type',mode||'--')+
+      cycleStat('Total time',totalTime||'--')+
+      cycleStat('Last cycle water',fmtLiters(lastWater))+
+      '</div>';
     body.innerHTML=html;
   }else{
     var steps=CYCLE_MODES[mode]||['Brine','Backwash','Rinse','Fill'];
     var activeIdx=steps.indexOf(step);
     var rt=d.cycle_runtime||'';
     var trt=d.cycle_total_runtime||'';
-    timerEl.innerHTML=rt?'\u23F1 '+rt+(trt?' \u00b7 Total: '+trt:''):'';
+    var timerParts=[];
+    if(rt)timerParts.push(cycleStat('Current step time',rt));
+    if(trt)timerParts.push(cycleStat('Total time',trt));
+    timerParts.push(cycleStat('Cycle water',fmtLiters(water)));
+    timerParts.push(cycleStat('Cleaning Cycle Type',mode||'--'));
 
     var html2='<div class="stepper">';
     steps.forEach(function(s,i){
@@ -481,12 +552,12 @@ function updateCycle(d){
       var timeVal=(i<activeIdx&&d[timeKey])?d[timeKey]:'';
       html2+='<div class="'+cls+'">'+
         '<div class="step-line"></div>'+
-        '<div class="step-dot">'+(i+1)+'</div>'+
+        '<div class="step-dot" title="'+s+'">'+stepIcon(s)+'</div>'+
         '<div class="step-name">'+s+'</div>'+
         '<div class="step-time">'+(i===activeIdx?rt:timeVal)+'</div>'+
         '</div>';
     });
-    html2+='</div>';
+    html2+='</div><div class="cycle-stats">'+timerParts.join('')+'</div>';
     body.innerHTML=html2;
   }
 }
@@ -517,9 +588,11 @@ async function refresh(){
 
     CARDS.forEach(function(c){
       var el=document.getElementById('val_'+c.id);
+      var card=document.getElementById('card_'+c.id);
       if(!el)return;
       var v=d[c.key];
       el.innerHTML=c.fmt(v,d);
+      if(card&&c.stateCls)card.className='card '+c.stateCls(v,d);
       if(c.bar){
         var bar=document.getElementById('bar_'+c.id);
         var pct=Math.max(0,Math.min(100,v||0));

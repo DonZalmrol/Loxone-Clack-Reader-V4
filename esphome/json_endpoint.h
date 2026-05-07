@@ -12,12 +12,15 @@
 #include <esp_system.h>
 
 // --- API authentication ---
-// Token is injected from the ESPHome substitution ${api_token}.
+// Token is injected through a PlatformIO build flag in .clack-base.yaml.
 // When empty, authentication is disabled (all endpoints are open).
-static const char *API_TOKEN = "${api_token}";
+#ifndef CLACK_API_TOKEN
+#define CLACK_API_TOKEN ""
+#endif
+static const char *API_TOKEN = CLACK_API_TOKEN;
 
 static bool api_auth_enabled() {
-  return API_TOKEN[0] != '\0';
+  return API_TOKEN[0] != '\0' && std::string(API_TOKEN) != "${api_token}";
 }
 
 // Check token from query param ?token=X or header "Authorization: Bearer X"
@@ -225,7 +228,10 @@ class DashboardHandler : public AsyncWebHandler {
     return request->url() == "/dashboard" && request->method() == HTTP_GET;
   }
   void handleRequest(AsyncWebServerRequest *request) override {
-    request->send(200, "text/html", (const char *)DASHBOARD_HTML);
+    auto *response = request->beginResponse(200, "text/html", (const char *)DASHBOARD_HTML);
+    response->addHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+    response->addHeader("Pragma", "no-cache");
+    request->send(response);
   }
 };
 
@@ -235,7 +241,10 @@ class ConfigPageHandler : public AsyncWebHandler {
     return request->url() == "/config" && request->method() == HTTP_GET;
   }
   void handleRequest(AsyncWebServerRequest *request) override {
-    request->send(200, "text/html", (const char *)CONFIG_HTML);
+    auto *response = request->beginResponse(200, "text/html", (const char *)CONFIG_HTML);
+    response->addHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+    response->addHeader("Pragma", "no-cache");
+    request->send(response);
   }
 };
 
