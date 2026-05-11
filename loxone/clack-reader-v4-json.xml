@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<VirtualInHttp Title="Clack Reader V4 JSON" Comment="ESPHome Clack Reader V4 /json endpoint for Loxone" Address="http://192.168.x.x/json" PollingTime="10">
+    <Info templateType="2" minVersion="12021027"/>
+
+    <VirtualInHttpCmd Title="Uptime Seconds" Comment="JSON key: uptime_seconds" Check="&quot;uptime_seconds&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; s" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="1000000000"/>
+
+    <VirtualInHttpCmd Title="Salt Level Distance TOF" Comment="JSON key: salt_level_distance_tof" Check="&quot;salt_level_distance_tof&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; cm" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="1000"/>
+    <VirtualInHttpCmd Title="Salt Level Distance" Comment="JSON key: salt_level_distance" Check="&quot;salt_level_distance&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; cm" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="1000"/>
+    <VirtualInHttpCmd Title="Salt Level Percent" Comment="JSON key: salt_level_percent" Check="&quot;salt_level_percent&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; %" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="100"/>
+    <VirtualInHttpCmd Title="Salt Level Dashboard Step" Comment="JSON key: salt_level_for_dashboard" Check="&quot;salt_level_for_dashboard&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; %" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="100"/>
+    <VirtualInHttpCmd Title="Salt Level Height" Comment="JSON key: salt_level_height" Check="&quot;salt_level_height&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; cm" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="1000"/>
+
+    <VirtualInHttpCmd Title="Water Flow Rate" Comment="JSON key: water_flow_rate" Check="&quot;water_flow_rate&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; L/min" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="10000"/>
+    <VirtualInHttpCmd Title="Water Meter" Comment="JSON key: water_meter" Check="&quot;water_meter&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; L" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="1000000000"/>
+    <VirtualInHttpCmd Title="Water Softener m3 Left" Comment="JSON key: water_softener_m3_left" Check="&quot;water_softener_m3_left&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; m3" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="1000000"/>
+    <VirtualInHttpCmd Title="Water Softener Liters Left" Comment="JSON key: water_softener_ltr_left" Check="&quot;water_softener_ltr_left&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; L" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="1000000000"/>
+    <VirtualInHttpCmd Title="Water Softener Percent Liters Left" Comment="JSON key: water_softener_percent_ltr_left" Check="&quot;water_softener_percent_ltr_left&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; %" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="100"/>
+    <VirtualInHttpCmd Title="Water Softener Percent Time Left" Comment="JSON key: water_softener_percent_time_left" Check="&quot;water_softener_percent_time_left&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; %" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="100"/>
+    <VirtualInHttpCmd Title="Capacity Used Last Cycle" Comment="JSON key: capacity_used" Check="&quot;capacity_used&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; L" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="1000000000"/>
+    <VirtualInHttpCmd Title="Cycle Water Used" Comment="JSON key: cycle_water_used" Check="&quot;cycle_water_used&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; L" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="1000000000"/>
+
+    <VirtualInHttpCmd Title="Water Hardness dH" Comment="JSON key: water_hardness_d" Check="&quot;water_hardness_d&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; degD" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="100"/>
+    <VirtualInHttpCmd Title="Water Hardness fH" Comment="JSON key: water_hardness_f" Check="&quot;water_hardness_f&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; degF" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="200"/>
+
+    <VirtualInHttpCmd Title="Power Clack" Comment="JSON key: power_clack" Check="&quot;power_clack&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; W" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="10000"/>
+    <VirtualInHttpCmd Title="Power ESP" Comment="JSON key: power_esp" Check="&quot;power_esp&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; W" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="10000"/>
+    <VirtualInHttpCmd Title="Power Chlorinator" Comment="JSON key: power_chlorinator" Check="&quot;power_chlorinator&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; W" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="10000"/>
+    <VirtualInHttpCmd Title="Voltage" Comment="JSON key: voltage" Check="&quot;voltage&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; V" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="1000"/>
+    <VirtualInHttpCmd Title="Internal Temperature" Comment="JSON key: internal_temperature" Check="&quot;internal_temperature&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; degC" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="-100" MaxVal="200"/>
+
+    <VirtualInHttpCmd Title="WiFi Signal dBm" Comment="JSON key: wifi_signal_db" Check="&quot;wifi_signal_db&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; dBm" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="-150" MaxVal="0"/>
+    <VirtualInHttpCmd Title="WiFi Signal Percent" Comment="JSON key: wifi_signal" Check="&quot;wifi_signal&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; %" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="100"/>
+    <VirtualInHttpCmd Title="Uptime Days" Comment="JSON key: uptime" Check="&quot;uptime&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; d" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="100000"/>
+
+    <VirtualInHttpCmd Title="Set Pulse Per Liter" Comment="JSON key: set_pulse_per_ltr" Check="&quot;set_pulse_per_ltr&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; pulses/L" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="1000"/>
+    <VirtualInHttpCmd Title="Min Salt Distance" Comment="JSON key: min_salt_distance" Check="&quot;min_salt_distance&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; cm" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="1000"/>
+    <VirtualInHttpCmd Title="Max Salt Distance" Comment="JSON key: max_salt_distance" Check="&quot;max_salt_distance&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; cm" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="1000"/>
+    <VirtualInHttpCmd Title="Fill Salt Distance" Comment="JSON key: fill_salt_distance" Check="&quot;fill_salt_distance&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; cm" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="1000"/>
+    <VirtualInHttpCmd Title="Capacity In Liters" Comment="JSON key: capacity_in_liters" Check="&quot;capacity_in_liters&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; L" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="1000000000"/>
+    <VirtualInHttpCmd Title="Capacity In Days" Comment="JSON key: capacity_in_days" Check="&quot;capacity_in_days&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; d" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="10000"/>
+    <VirtualInHttpCmd Title="Resin Clean Days" Comment="JSON key: resinclean_days" Check="&quot;resinclean_days&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; d" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="10000"/>
+    <VirtualInHttpCmd Title="Chlorinator Active Time" Comment="JSON key: chlorinator_active_time" Check="&quot;chlorinator_active_time&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; min" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="10000"/>
+    <VirtualInHttpCmd Title="Delay Leakage Alarm" Comment="JSON key: delay_leakage_alarm" Check="&quot;delay_leakage_alarm&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; min" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="10000"/>
+    <VirtualInHttpCmd Title="Water Flow Timeout" Comment="JSON key: water_flow_timeout" Check="&quot;water_flow_timeout&quot;:\v" Signed="true" Analog="true" Unit="&lt;v.1&gt; s" SourceValLow="0" DestValLow="0" SourceValHigh="100" DestValHigh="100" DefVal="0" MinVal="0" MaxVal="10000"/>
+
+    <VirtualInHttpCmd Title="Connection Status" Comment="JSON key: connection_status is true" Check="&quot;connection_status&quot;:true" Analog="false"/>
+    <VirtualInHttpCmd Title="Motor Running" Comment="JSON key: motor_running is true" Check="&quot;motor_running&quot;:true" Analog="false"/>
+    <VirtualInHttpCmd Title="Water Flowing" Comment="JSON key: water_flowing is true" Check="&quot;water_flowing&quot;:true" Analog="false"/>
+    <VirtualInHttpCmd Title="Leakage Detected" Comment="JSON key: leakage_detected is true" Check="&quot;leakage_detected&quot;:true" Analog="false"/>
+    <VirtualInHttpCmd Title="Block Regen" Comment="JSON key: block_regen is true" Check="&quot;block_regen&quot;:true" Analog="false"/>
+    <VirtualInHttpCmd Title="Chlorinator Relay" Comment="JSON key: chlorinator is true" Check="&quot;chlorinator&quot;:true" Analog="false"/>
+
+    <VirtualInHttpCmd Title="Fill Salt Needed" Comment="JSON key: fill_salt equals yes" Check="&quot;fill_salt&quot;:&quot;yes&quot;" Analog="false"/>
+
+    <VirtualInHttpCmd Title="Cycle Idle" Comment="JSON key: cycle_step equals Idle" Check="&quot;cycle_step&quot;:&quot;Idle&quot;" Analog="false"/>
+    <VirtualInHttpCmd Title="Cycle Brine" Comment="JSON key: cycle_step equals Brine" Check="&quot;cycle_step&quot;:&quot;Brine&quot;" Analog="false"/>
+    <VirtualInHttpCmd Title="Cycle Backwash" Comment="JSON key: cycle_step equals Backwash" Check="&quot;cycle_step&quot;:&quot;Backwash&quot;" Analog="false"/>
+    <VirtualInHttpCmd Title="Cycle Backwash2" Comment="JSON key: cycle_step equals Backwash2" Check="&quot;cycle_step&quot;:&quot;Backwash2&quot;" Analog="false"/>
+    <VirtualInHttpCmd Title="Cycle Rinse" Comment="JSON key: cycle_step equals Rinse" Check="&quot;cycle_step&quot;:&quot;Rinse&quot;" Analog="false"/>
+    <VirtualInHttpCmd Title="Cycle Fill" Comment="JSON key: cycle_step equals Fill" Check="&quot;cycle_step&quot;:&quot;Fill&quot;" Analog="false"/>
+    <VirtualInHttpCmd Title="Cycle Service" Comment="JSON key: cycle_step equals Service" Check="&quot;cycle_step&quot;:&quot;Service&quot;" Analog="false"/>
+
+    <VirtualInHttpCmd Title="Function Mode Off" Comment="JSON key: function_mode equals Off" Check="&quot;function_mode&quot;:&quot;Off&quot;" Analog="false"/>
+    <VirtualInHttpCmd Title="Function Mode Chlorinator" Comment="JSON key: function_mode equals Chlorinator" Check="&quot;function_mode&quot;:&quot;Chlorinator&quot;" Analog="false"/>
+
+    <VirtualInHttpCmd Title="Regeneration Upflow Post Fill" Comment="JSON key: regeneration_mode equals Upflow - Post fill" Check="&quot;regeneration_mode&quot;:&quot;Upflow - Post fill&quot;" Analog="false"/>
+    <VirtualInHttpCmd Title="Regeneration Upflow Pre Fill" Comment="JSON key: regeneration_mode equals Upflow - Pre fill" Check="&quot;regeneration_mode&quot;:&quot;Upflow - Pre fill&quot;" Analog="false"/>
+    <VirtualInHttpCmd Title="Regeneration Downflow Post Fill" Comment="JSON key: regeneration_mode equals Downflow - Post fill" Check="&quot;regeneration_mode&quot;:&quot;Downflow - Post fill&quot;" Analog="false"/>
+    <VirtualInHttpCmd Title="Regeneration Downflow Pre Fill" Comment="JSON key: regeneration_mode equals Downflow - Pre fill" Check="&quot;regeneration_mode&quot;:&quot;Downflow - Pre fill&quot;" Analog="false"/>
+
+    <VirtualInHttpCmd Title="Hardness Very Soft" Comment="JSON key: water_hardness_class equals Very soft" Check="&quot;water_hardness_class&quot;:&quot;Very soft&quot;" Analog="false"/>
+    <VirtualInHttpCmd Title="Hardness Soft" Comment="JSON key: water_hardness_class equals Soft" Check="&quot;water_hardness_class&quot;:&quot;Soft&quot;" Analog="false"/>
+    <VirtualInHttpCmd Title="Hardness Medium Hard" Comment="JSON key: water_hardness_class equals Medium hard" Check="&quot;water_hardness_class&quot;:&quot;Medium hard&quot;" Analog="false"/>
+    <VirtualInHttpCmd Title="Hardness Hard" Comment="JSON key: water_hardness_class equals Hard" Check="&quot;water_hardness_class&quot;:&quot;Hard&quot;" Analog="false"/>
+    <VirtualInHttpCmd Title="Hardness Very Hard" Comment="JSON key: water_hardness_class equals Very hard" Check="&quot;water_hardness_class&quot;:&quot;Very hard&quot;" Analog="false"/>
+</VirtualInHttp>
